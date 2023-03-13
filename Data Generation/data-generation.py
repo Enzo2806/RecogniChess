@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 # Method to print in the blender console
 import bpy
@@ -58,7 +59,7 @@ black_rook_2 = bpy.data.objects["Rook.003"]
 # coordinates of the other locations
 locations = {'A1': (3.5, 3.5, 1.7842)}
 
-# We know moving on the X axis changes the column of the pawn, and each location center is separated by 
+# We know moving on the X axis changes the column of the chess piece, and each location center is separated by 
 # exaclty 1 meter. Thus moving from A1 to B1 is done by removing 1 meter on the X coordinate.
 # The same principle is applied to move on rows: moving from A1 to A2 is done by removing 1 meter on the Y coordinate.
 # The Z coordinate remains constant.
@@ -70,25 +71,19 @@ for i in range (8):
     for j in range (8):
         square = chr(ord(column) + i) + str(j+1) # Create the name of the location, ex: A2, B6 ...
         locations[square] = (3.5-i, 3.5-j, 1.7842) # Create a new entry in the dictionnary and store the cooresponding coordinates
-        
-# Test --> Check that the black rook on H8 and the coordinate we computed for H8 are the same
-print("TEST: Check that the black rook on H8 and the coordinate we computed for H8 are the same")
-print(locations["H8"])
-print(black_rook_2.location)
 
-
-# Create another location dictionnary for the possible ranodm locations of the small pawns
-# We consider that small pawns of a color cannot be placed at both ends of the board.
+# Create another location dictionnary for the possible ranodm locations of the pawns
+# We consider that pawns cannot be placed at both ends of the board.
 # Indeed they would be changed immediatly to a queen, rook, knight or bishop if they are on the other color's side
 # And they can't move backwards. 
-small_pawn_locations = locations.copy() # Shallow copy
+pawn_locations = locations.copy() # Shallow copy
 
 # Iterate through all items in the available locations
-for location in list(small_pawn_locations):
+for location in list(pawn_locations):
     # If they are the ends of the board i.e the location names ending with 0 or 8 (A0, B8...) 
     if location.endswith('0') or location.endswith('8'):
-        # Delete it from the possible locations of small pawns
-        del small_pawn_locations[location]
+        # Delete it from the possible locations of pawns
+        del pawn_locations[location]
 
 # We also know that bishops that start on a color have to stay on it for the rest of the game
 # We therefore also need to store all locations of white squares
@@ -124,25 +119,32 @@ for location in list(locations):
 # All the examples will have to be labelled.
 dataset_size = 1
 
+# Create an array containing all chess pieces
+all_pieces = [white_bishop_1, white_bishop_2, white_king, white_knight_1, white_knight_2, white_queen,
+pawn_white_1, pawn_white_2, pawn_white_3, pawn_white_4, pawn_white_5, pawn_white_6, pawn_white_7, pawn_white_8,
+white_rook_1, white_rook_2, black_bishop_1, black_bishop_2, black_king, black_knight_1, black_knight_2, black_queen,
+pawn_black_1, pawn_black_2, pawn_black_3, pawn_black_4, pawn_black_5, pawn_black_6, pawn_black_7, pawn_black_8,
+black_rook_1, black_rook_2]
+
 # Create an array containing all the white pawns
-white_pawns = [white_bishop_1, white_bishop_2, white_king, white_knight_1, white_knight_2, white_queen,
+white_pieces = [white_bishop_1, white_bishop_2, white_king, white_knight_1, white_knight_2, white_queen,
 pawn_white_1, pawn_white_2, pawn_white_3, pawn_white_4, pawn_white_5, pawn_white_6, pawn_white_7, pawn_white_8,
 white_rook_1, white_rook_2]
 
 # Create an array containing all the black pawns
-black_pawns = [black_bishop_1, black_bishop_2, black_king, black_knight_1, black_knight_2, black_queen,
+black_pieces = [black_bishop_1, black_bishop_2, black_king, black_knight_1, black_knight_2, black_queen,
 pawn_black_1, pawn_black_2, pawn_black_3, pawn_black_4, pawn_black_5, pawn_black_6, pawn_black_7, pawn_black_8,
 black_rook_1, black_rook_2]
 
 # Arrays containing all small pawns (black and white)
-all_small_pawns = [pawn_black_1, pawn_black_2, pawn_black_3, pawn_black_4, pawn_black_5, pawn_black_6, pawn_black_7, pawn_black_8,
+all_pawns = [pawn_black_1, pawn_black_2, pawn_black_3, pawn_black_4, pawn_black_5, pawn_black_6, pawn_black_7, pawn_black_8,
 pawn_white_1, pawn_white_2, pawn_white_3, pawn_white_4, pawn_white_5, pawn_white_6, pawn_white_7, pawn_white_8]
 
 # Method to select pawns
 def selectPawns():
     # Randomly select white and black pawns (random number of each)
-    ran_white = random.sample(white_pawns, random.randint(0, len(white_pawns)))
-    ran_black = random.sample(black_pawns, random.randint(0, len(black_pawns)))
+    ran_white = random.sample(white_pieces, random.randint(0, len(white_pieces)))
+    ran_black = random.sample(black_pieces, random.randint(0, len(black_pieces)))
     
     # Make sure both still have the king, otherwise the game would be over
     if white_king not in ran_white: ran_white.append(white_king)
@@ -151,38 +153,121 @@ def selectPawns():
      #return concatenated arrays 
     return ran_white + ran_black
 
-# Method to assign random location to a pawn
-def assignLocation(pawn):
-    # Check if pawn is a small one
-    if pawn in all_small_pawns:
-        # Select random locaiton froma available locations we computed above
-        new_loc = random.choice(list(small_pawn_locations.values()))
-        pawn.location = new_loc # Assign new location
-        
-    # Check if pawn is a bishop starting on a white square
-    if pawn == white_bishop_1 or pawn == black_bishop_1:
-        # If it is, this pawn must remain on a white square so we select a random
-        # white square on the board and make it it's new location
-        new_loc = random.choice(list(all_white_squares.values()))
-        pawn.location = new_loc # Assign new location
+# Method to retrieve pawn's name from object
+def getName (piece):
+    if piece == white_bishop_1 or piece == white_bishop_2:
+        return "White Bishop"
+    if piece == black_bishop_1 or piece == black_bishop_2:
+        return "Black Bishop"
+    if piece == white_king:
+        return "White King"
+    if piece == black_king:
+        return "Black King"
+    if piece == white_knight_1 or piece == white_knight_2:
+        return "White Knight"
+    if piece == black_knight_1 or piece == black_knight_2:
+        return "Black Knight" 
+    if piece in all_pawns and piece in white_pieces:
+        return "White Pawn"
+    if piece in all_pawns and piece in black_pieces:
+        return "Black Pawn"
+    if piece == white_queen:
+        return "White Queen"
+    if piece == black_queen:
+        return "Black Queen"
+    if piece == white_rook_1 or piece == white_rook_2:
+        return "White Rook"
+    if piece == black_rook_1 or piece == black_rook_2:
+        return "Black Rook" 
     
-    # Check if pawn is a bishop starting on a green square
-    if pawn == white_bishop_2 or pawn == black_bishop_2:
+# Method to assign random location to a pawn
+def assignLocation(piece, label):
+    # Check if piece is pawn
+    if piece in all_pawns:
+        # get the new location, change it if it is already occupied by a piece
+        while True: 
+            # Select random locaiton from available locations we computed above
+            square_name, new_loc = random.choice(list(pawn_locations.items()))
+            if square_name not in label:
+                break
+            
+        piece.location = new_loc # Assign new location
+        
+        # Store the placed pawn and its location in label array
+        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
+        label = np.vstack([label, newRow]) # add the placed pawn with its square location in the label 
+        
+        return label
+        
+    # Check if piece is a bishop starting on a white square
+    if piece == white_bishop_1 or piece == black_bishop_1:
+        # If it is, this piece must remain on a white square so we select a random
+        # white square on the board and make it it's new location
+        
+        # get the new location, change it if it is already occupied by a piece
+        while True:
+            square_name, new_loc = random.choice(list(all_white_squares.items()))
+            if square_name not in label:
+                break
+            
+        piece.location = new_loc # Assign new location
+        
+        # Store the placed bishop and its location in label array
+        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
+        label = np.vstack([label, newRow]) # add the placed bishop with its square location in the label 
+        
+        return label
+    
+    # Check if piece is a bishop starting on a green square
+    if piece == white_bishop_2 or piece == black_bishop_2:
         # If it is, this pawn must remain on a green square so we select a random
         # green square on the board and make it it's new location
-        new_loc = random.choice(list(all_green_squares.values()))
-        pawn.location = new_loc # Assign new location
         
-    # Otherwise the pawn can go anywhere on the board, so we just select a random locaiton and assign it.
+        # get the new location, change it if it is already occupied by a piece
+        while True:
+            square_name, new_loc = random.choice(list(all_green_squares.items()))
+            if square_name not in label:
+                break
+            
+        piece.location = new_loc # Assign new location
+        
+        # Store the placed bishop and its location in label array
+        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
+        label = np.vstack([label, newRow]) # add the placed bishop with its square location in the label 
+        
+        return label
+        
+    # Otherwise the piece can go anywhere on the board, so we just select a random location and assign it.
     else:
-        new_loc = random.choice(list(locations.values()))
-        pawn.location = new_loc # Assign new location
+        
+        while True:
+            square_name, new_loc = random.choice(list(locations.items()))
+            
+        piece.location = new_loc # Assign new location
+        
+         # Store the placed piece and its location in label array
+        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
+        label = np.vstack([label, newRow]) # add the placed piece with its square location in the label 
+        
+        return label
+        
+# Array to store labels
+label = ["Square number", "Chess Piece"]
 
-#for i in range (dataset_size):
-#    selected_pawns =  selectPawns()
-#    for pawn in selected_pawns:
-#        print(pawn)
-#        assignLocation(pawn)
+# Location to put pawns we didn't randomly select
+not_used_location = (6, 6, 2)
+
+for i in range (dataset_size):
+    selected_pawns =  selectPawns()
+    for pawn in all_pieces:
+        if pawn in selected_pawns:
+            label = assignLocation(pawn, label)
+        else:
+            pawn.location = not_used_location
+
+print(label.shape)
+print(label)
+            
     
 
 
