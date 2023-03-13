@@ -1,5 +1,7 @@
 import random
 import numpy as np
+import os
+from mathutils import Euler # to set rotation of pieces
 
 # Method to print in the blender console
 import bpy
@@ -50,6 +52,7 @@ white_rook_1 = bpy.data.objects["Rook"]
 white_rook_2 = bpy.data.objects["Rook.001"]
 black_rook_1 = bpy.data.objects["Rook.002"]
 black_rook_2 = bpy.data.objects["Rook.003"]
+
 
 # Create an array storing all possible locations on the board
 # We will use a dictionnary to store the center point for each poissible position
@@ -113,12 +116,6 @@ for location in list(locations):
     if row % 2 == 0 and column % 2 == 0:
          del all_white_squares[location]
 
-
-# Variable to store the number of examples to generate
-# Since we use this dataset for domain adaptation, all the examples will be in a training dataset
-# All the examples will have to be labelled.
-dataset_size = 1
-
 # Create an array containing all chess pieces
 all_pieces = [white_bishop_1, white_bishop_2, white_king, white_knight_1, white_knight_2, white_queen,
 pawn_white_1, pawn_white_2, pawn_white_3, pawn_white_4, pawn_white_5, pawn_white_6, pawn_white_7, pawn_white_8,
@@ -140,9 +137,9 @@ black_rook_1, black_rook_2]
 all_pawns = [pawn_black_1, pawn_black_2, pawn_black_3, pawn_black_4, pawn_black_5, pawn_black_6, pawn_black_7, pawn_black_8,
 pawn_white_1, pawn_white_2, pawn_white_3, pawn_white_4, pawn_white_5, pawn_white_6, pawn_white_7, pawn_white_8]
 
-# Method to select pawns
-def selectPawns():
-    # Randomly select white and black pawns (random number of each)
+# Method to select pieces
+def selectPieces():
+    # Randomly select white and black pieces (random number of each)
     ran_white = random.sample(white_pieces, random.randint(0, len(white_pieces)))
     ran_black = random.sample(black_pieces, random.randint(0, len(black_pieces)))
     
@@ -182,21 +179,32 @@ def getName (piece):
     
 # Method to assign random location to a pawn
 def assignLocation(piece, label):
+    
+    # No matter the piece, we want to add some random rotation
+    # Indeed chess pieces are rarely all aligned in the same direction.
+    piece.rotation_euler = Euler((0, 0, random.uniform(0, 2*np.pi)), 'XYZ')
+    
     # Check if piece is pawn
     if piece in all_pawns:
         # get the new location, change it if it is already occupied by a piece
         while True: 
-            # Select random locaiton from available locations we computed above
+            # Select random location from available locations we computed above
             square_name, new_loc = random.choice(list(pawn_locations.items()))
-            if square_name not in label:
+            
+            # If the square was not occupied break, otherwise find new location
+            index = np.where(label == square_name)
+            if label[index[0][0]][1] == '':
                 break
             
-        piece.location = new_loc # Assign new location
+        X = new_loc[0] + random.uniform(-0.17, 0.17)
+        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        Z = new_loc[2]
+        
+        piece.location = (X, Y, Z) # Assign new location
         
         # Store the placed pawn and its location in label array
-        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
-        label = np.vstack([label, newRow]) # add the placed pawn with its square location in the label 
-        
+        label[index[0][0]][1] = getName(piece)
+    
         return label
         
     # Check if piece is a bishop starting on a white square
@@ -206,15 +214,22 @@ def assignLocation(piece, label):
         
         # get the new location, change it if it is already occupied by a piece
         while True:
+            # Select random location from available locations we computed above
             square_name, new_loc = random.choice(list(all_white_squares.items()))
-            if square_name not in label:
+            
+            # If the square was not occupied break, otherwise find new location
+            index = np.where(label == square_name)
+            if label[index[0][0]][1] == '':
                 break
             
-        piece.location = new_loc # Assign new location
+        X = new_loc[0] + random.uniform(-0.17, 0.17)
+        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        Z = new_loc[2]
         
-        # Store the placed bishop and its location in label array
-        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
-        label = np.vstack([label, newRow]) # add the placed bishop with its square location in the label 
+        piece.location = (X, Y, Z) # Assign new location
+        
+        # Store the placed pawn and its location in label array
+        label[index[0][0]][1] = getName(piece)
         
         return label
     
@@ -225,49 +240,83 @@ def assignLocation(piece, label):
         
         # get the new location, change it if it is already occupied by a piece
         while True:
+            # Select random location from available locations we computed above
             square_name, new_loc = random.choice(list(all_green_squares.items()))
-            if square_name not in label:
+            
+            # If the square was not occupied break, otherwise find new location
+            index = np.where(label == square_name)
+            if label[index[0][0]][1] == '':
                 break
             
-        piece.location = new_loc # Assign new location
+        X = new_loc[0] + random.uniform(-0.17, 0.17)
+        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        Z = new_loc[2]
         
-        # Store the placed bishop and its location in label array
-        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
-        label = np.vstack([label, newRow]) # add the placed bishop with its square location in the label 
+        piece.location = (X, Y, Z) # Assign new location
+        
+        # Store the placed pawn and its location in label array
+        label[index[0][0]][1] = getName(piece)
         
         return label
         
     # Otherwise the piece can go anywhere on the board, so we just select a random location and assign it.
     else:
-        
+        # get the new location, change it if it is already occupied by a piece
         while True:
+            # Select random location from available locations we computed above
             square_name, new_loc = random.choice(list(locations.items()))
             
-        piece.location = new_loc # Assign new location
+            # If the square was not occupied break, otherwise find new location
+            index = np.where(label == square_name)
+            if label[index[0][0]][1] == '':
+                break
+            
+        X = new_loc[0] + random.uniform(-0.17, 0.17)
+        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        Z = new_loc[2]
         
-         # Store the placed piece and its location in label array
-        newRow = [square_name, getName(piece)] # create the row to add --> "Square number", "Chess piece name"
-        label = np.vstack([label, newRow]) # add the placed piece with its square location in the label 
+        piece.location = (X, Y, Z) # Assign new location
         
+        # Store the placed pawn and its location in label array
+        label[index[0][0]][1] = getName(piece)
         return label
-        
-# Array to store labels
-label = ["Square number", "Chess Piece"]
-
-# Location to put pawns we didn't randomly select
+    
+# Location to put pieces we didn't randomly select
 not_used_location = (6, 6, 2)
 
+
+# Variable to store the number of examples to generate
+# Since we use this dataset for domain adaptation, all the examples will be in a training dataset
+# All the examples will have to be labelled.
+dataset_size = 1
+
 for i in range (dataset_size):
-    selected_pawns =  selectPawns()
-    for pawn in all_pieces:
-        if pawn in selected_pawns:
-            label = assignLocation(pawn, label)
-        else:
-            pawn.location = not_used_location
-
-print(label.shape)
-print(label)
-            
     
-
-
+    # Array to store labels for this example
+    label = ["Square number", "Chess Piece"]
+    for square_name in list(locations.keys()):
+        label = np.vstack([label, [square_name, '']]) # Populate label array for this example   
+    
+    # Randomly Select pieces
+    selected_pieces =  selectPieces()
+    
+    # For each piece, find it a random location (some have specific rules see method above
+    for piece in all_pieces:
+        # Place the pieces that were randomly selected 
+        if piece in selected_pieces:
+            label = assignLocation(piece, label)
+        else:
+            # Place all pieces that were not randomly selected in the same spot out of the scene being rendered
+            piece.location = not_used_location
+    
+    
+#    # Render the image and store it with labels
+#    
+#    # Save the label file as .csv
+#    name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
+#    np.save(name, label)
+#    
+#    # Set the render settings
+#    bpy.context.scene.render.image_settings.file_format = 'PNG'
+#    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i
+#    bpy.ops.render.render(write_still = 1)
