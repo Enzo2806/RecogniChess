@@ -1,2 +1,4 @@
 myenv
 venv
+.idea
+git rm --cached -r .idea
