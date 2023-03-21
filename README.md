@@ -25,6 +25,3 @@ See step 2 above.
 ## Adding new dependencies
 
 From within a venv terminal, run "pip install <dependency>". Don't forget to then run "pip freeze > requirements.txt" to update the requirements file for others to use.
-
-
-Test Test
