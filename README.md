@@ -14,7 +14,7 @@ If using VSCode, download the venv extension and activate the virtual environmen
 
 ## Step 3 - Install the dependencies from the requirements.txt file
 
-From within the venv terminal, run "pip install requirements.txt" to install the dependencies used up until that point in the project.
+From within the venv terminal, run "pip install -r requirements.txt" to install the dependencies used up until that point in the project.
 
 # Recurrent use of the virtual environment
 
