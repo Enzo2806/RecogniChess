@@ -1,0 +1,12 @@
+# Blender 3.4.1 MTL File: 'Chessset.blend'
+# www.blender.org
+
+newmtl Mrke-brikker.004
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.876055 0.795924 0.790069
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2

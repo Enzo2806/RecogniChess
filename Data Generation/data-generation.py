@@ -137,6 +137,9 @@ black_rook_1, black_rook_2]
 all_pawns = [pawn_black_1, pawn_black_2, pawn_black_3, pawn_black_4, pawn_black_5, pawn_black_6, pawn_black_7, pawn_black_8,
 pawn_white_1, pawn_white_2, pawn_white_3, pawn_white_4, pawn_white_5, pawn_white_6, pawn_white_7, pawn_white_8]
 
+# Location to put pieces we didn't randomly select
+not_used_location = (6, 6, 2)
+
 # Method to select pieces
 def selectPieces():
     # Randomly select white and black pieces (random number of each)
@@ -179,10 +182,15 @@ def getName (piece):
     
 # Method to assign random location to a pawn
 def assignLocation(piece, label):
-    
     # No matter the piece, we want to add some random rotation
     # Indeed chess pieces are rarely all aligned in the same direction.
-    piece.rotation_euler = Euler((0, 0, random.uniform(0, 2*np.pi)), 'XYZ')
+    # However, since we added the knight pawn from another set.
+    # its rotation properties are different (the Z axis is not the one we need to modify but the Y axis)
+    # Thus we check if the piece is a knight or not and modify its rotation accordingly
+    if piece != white_knight_1 and piece != white_knight_2 and piece != black_knight_1 and piece != black_knight_2:
+        piece.rotation_euler = Euler((0, 0, random.uniform(0, 2*np.pi)), 'XYZ')
+    else:
+        piece.rotation_euler = Euler((0, random.uniform(0, 2*np.pi), 0), 'XYZ')
     
     # Check if piece is pawn
     if piece in all_pawns:
@@ -196,8 +204,8 @@ def assignLocation(piece, label):
             if label[index[0][0]][1] == '':
                 break
             
-        X = new_loc[0] + random.uniform(-0.17, 0.17)
-        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        X = new_loc[0] + random.uniform(-0.10, 0.10)
+        Y = new_loc[1] + random.uniform(-0.10, 0.10)
         Z = new_loc[2]
         
         piece.location = (X, Y, Z) # Assign new location
@@ -222,8 +230,8 @@ def assignLocation(piece, label):
             if label[index[0][0]][1] == '':
                 break
             
-        X = new_loc[0] + random.uniform(-0.17, 0.17)
-        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        X = new_loc[0] + random.uniform(-0.10, 0.10)
+        Y = new_loc[1] + random.uniform(-0.10, 0.10)
         Z = new_loc[2]
         
         piece.location = (X, Y, Z) # Assign new location
@@ -248,8 +256,8 @@ def assignLocation(piece, label):
             if label[index[0][0]][1] == '':
                 break
             
-        X = new_loc[0] + random.uniform(-0.17, 0.17)
-        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        X = new_loc[0] + random.uniform(-0.1, 0.1)
+        Y = new_loc[1] + random.uniform(-0.1, 0.1)
         Z = new_loc[2]
         
         piece.location = (X, Y, Z) # Assign new location
@@ -257,6 +265,55 @@ def assignLocation(piece, label):
         # Store the placed pawn and its location in label array
         label[index[0][0]][1] = getName(piece)
         
+        return label
+    
+    # Place the black king
+    if piece == black_king:
+        # remember, we always place the white king before the black one 
+        # because of the order in which we select them
+        # So we place the black king in any location except the
+        # locations around the white one.
+        
+        # Get the location of the white king
+        white_king_location = label[np.where(label=="White King")[0]][0][0]
+        
+        # Get the X and Y coordinate of the white king
+        white_king_X = locations[white_king_location][0]
+        white_king_Y = locations[white_king_location][1]
+        
+        # Copy all locations into an aray that will store the possible locations for the black king
+        black_king_locations = locations.copy()
+        # Iterate through all possible squares in the locations dictionnary
+        # Remove the locations next to the white king 
+        for key, values in locations.items():
+            X = values[0]
+            Y = values[1]
+            
+            if X == white_king_X and (Y == white_king_Y or Y == white_king_Y+1 or Y == white_king_Y-1):
+                del black_king_locations[key]
+            if X == white_king_X+1 and (Y == white_king_Y or Y == white_king_Y+1 or Y == white_king_Y-1):
+                del black_king_locations[key]
+            if X == white_king_X-1 and (Y == white_king_Y or Y == white_king_Y+1 or Y == white_king_Y-1):
+                del black_king_locations[key]
+                
+        # get the new location, change it if it is already occupied by a piece
+        while True:
+            # Select random location from available locations we computed above
+            square_name, new_loc = random.choice(list(black_king_locations.items()))
+            
+            # If the square was not occupied break, otherwise find new location
+            index = np.where(label == square_name)
+            if label[index[0][0]][1] == '':
+                break
+        
+        X = new_loc[0] + random.uniform(-0.10, 0.10)
+        Y = new_loc[1] + random.uniform(-0.10, 0.10)
+        Z = new_loc[2]
+        
+        piece.location = (X, Y, Z) # Assign new location
+        
+        # Store the placed pawn and its location in label array
+        label[index[0][0]][1] = getName(piece)
         return label
         
     # Otherwise the piece can go anywhere on the board, so we just select a random location and assign it.
@@ -271,8 +328,8 @@ def assignLocation(piece, label):
             if label[index[0][0]][1] == '':
                 break
             
-        X = new_loc[0] + random.uniform(-0.17, 0.17)
-        Y = new_loc[1] + random.uniform(-0.17, 0.17)
+        X = new_loc[0] + random.uniform(-0.10, 0.10)
+        Y = new_loc[1] + random.uniform(-0.10, 0.10)
         Z = new_loc[2]
         
         piece.location = (X, Y, Z) # Assign new location
@@ -280,15 +337,12 @@ def assignLocation(piece, label):
         # Store the placed pawn and its location in label array
         label[index[0][0]][1] = getName(piece)
         return label
-    
-# Location to put pieces we didn't randomly select
-not_used_location = (6, 6, 2)
 
 
 # Variable to store the number of examples to generate
 # Since we use this dataset for domain adaptation, all the examples will be in a training dataset
 # All the examples will have to be labelled.
-dataset_size = 10
+dataset_size = 1
 
 for i in range (dataset_size):
     
@@ -303,7 +357,9 @@ for i in range (dataset_size):
     # For each piece, find it a random location (some have specific rules see method above
     for piece in all_pieces:
         # Place the pieces that were randomly selected 
-        if piece in selected_pieces:
+        if piece in selected_pieces: 
+            # Place the piece by assignining it a location
+            # Keep track of the bael array        
             label = assignLocation(piece, label)
         else:
             # Place all pieces that were not randomly selected in the same spot out of the scene being rendered
@@ -312,11 +368,11 @@ for i in range (dataset_size):
     
     # Render the image and store it with labels
     
-    # Save the label file as .csv
-    name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
-    np.save(name, label)
-    
-    # Set the render settings
-    bpy.context.scene.render.image_settings.file_format = 'PNG'
-    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i
-    bpy.ops.render.render(write_still = 1)
+#    # Save the label file as .csv
+#    name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
+#    np.save(name, label)
+#    
+#    # Set the render settings
+#    bpy.context.scene.render.image_settings.file_format = 'PNG'
+#    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i
+#    bpy.ops.render.render(write_still = 1)
