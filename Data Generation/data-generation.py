@@ -184,13 +184,17 @@ def getName (piece):
 def assignLocation(piece, label):
     # No matter the piece, we want to add some random rotation
     # Indeed chess pieces are rarely all aligned in the same direction.
-    # However, since we added the knight pawn from another set.
+    # However, since we added the knight and bishop pawns from another set.
     # its rotation properties are different (the Z axis is not the one we need to modify but the Y axis)
-    # Thus we check if the piece is a knight or not and modify its rotation accordingly
-    if piece != white_knight_1 and piece != white_knight_2 and piece != black_knight_1 and piece != black_knight_2:
+    # Thus we check if the piece is a knight or a bishop or not and modify its rotation accordingly
+    if piece != white_knight_1 and piece != white_knight_2 and piece != black_knight_1 and piece != black_knight_2 :
         piece.rotation_euler = Euler((0, 0, random.uniform(0, 2*np.pi)), 'XYZ')
     else:
         piece.rotation_euler = Euler((0, random.uniform(0, 2*np.pi), 0), 'XYZ')
+    
+    # If the piece is a bishop, we always shift the coordinate X by pi/4 = 90 degrees and set the  Z axis to random
+    if  piece == white_bishop_1 or piece == white_bishop_2 or piece == black_bishop_1 or piece == black_bishop_2:
+        piece.rotation_euler = Euler((np.pi/2, 0, random.uniform(0, 2*np.pi)), 'XYZ')
     
     # Check if piece is pawn
     if piece in all_pawns:
