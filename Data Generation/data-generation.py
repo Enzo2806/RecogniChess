@@ -53,6 +53,11 @@ white_rook_2 = bpy.data.objects["Rook.001"]
 black_rook_1 = bpy.data.objects["Rook.002"]
 black_rook_2 = bpy.data.objects["Rook.003"]
 
+# Light objects
+light1 = bpy.data.objects["Spot"]
+light2 = bpy.data.objects["Spot.001"]
+light3 = bpy.data.objects["Spot.002"]
+light4 = bpy.data.objects["Spot.003"]
 
 # Create an array storing all possible locations on the board
 # We will use a dictionnary to store the center point for each poissible position
@@ -84,7 +89,7 @@ pawn_locations = locations.copy() # Shallow copy
 # Iterate through all items in the available locations
 for location in list(pawn_locations):
     # If they are the ends of the board i.e the location names ending with 0 or 8 (A0, B8...) 
-    if location.endswith('0') or location.endswith('8'):
+    if location.endswith('1') or location.endswith('8'):
         # Delete it from the possible locations of pawns
         del pawn_locations[location]
 
@@ -236,7 +241,7 @@ def assignLocation(piece, label):
             
         X = new_loc[0] + random.uniform(-0.10, 0.10)
         Y = new_loc[1] + random.uniform(-0.10, 0.10)
-        Z = new_loc[2]
+        Z = 1.98816 # Bishops need to be placed a bit higher because of the center of origin being different (imported object)
         
         piece.location = (X, Y, Z) # Assign new location
         
@@ -262,7 +267,7 @@ def assignLocation(piece, label):
             
         X = new_loc[0] + random.uniform(-0.1, 0.1)
         Y = new_loc[1] + random.uniform(-0.1, 0.1)
-        Z = new_loc[2]
+        Z = 1.98816 # Bishops need to be placed a bit higher because of the center of origin being different (imported object)
         
         piece.location = (X, Y, Z) # Assign new location
         
@@ -346,7 +351,7 @@ def assignLocation(piece, label):
 # Variable to store the number of examples to generate
 # Since we use this dataset for domain adaptation, all the examples will be in a training dataset
 # All the examples will have to be labelled.
-dataset_size = 1
+dataset_size = 35
 
 for i in range (dataset_size):
     
@@ -369,14 +374,34 @@ for i in range (dataset_size):
             # Place all pieces that were not randomly selected in the same spot out of the scene being rendered
             piece.location = not_used_location
     
+    # Choose a random lighting setup
+    # Setup 1: Just 1 spot light, act as a flash from above liek real dataset
+    choose_light = random.randint(0, 2)
+    if choose_light == 0:
+        light1.hide_render = False
+        light2.hide_render = True
+        light3.hide_render = True
+        light4.hide_render = True
+        
+    if choose_light == 1:
+        light1.hide_render = True
+        light2.hide_render = False
+        light3.hide_render = False
+        light4.hide_render = True
+    
+    if choose_light == 2:
+        light1.hide_render = True
+        light2.hide_render = True
+        light3.hide_render = False
+        light4.hide_render = False
     
     # Render the image and store it with labels
     
-#    # Save the label file as .csv
-#    name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
-#    np.save(name, label)
-#    
-#    # Set the render settings
-#    bpy.context.scene.render.image_settings.file_format = 'PNG'
-#    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i
-#    bpy.ops.render.render(write_still = 1)
+    # Save the label file as .csv
+    name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
+    np.save(name, label)
+    
+    # Set the render settings
+    bpy.context.scene.render.image_settings.file_format = 'PNG'
+    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i
+    bpy.ops.render.render(write_still = 1)
