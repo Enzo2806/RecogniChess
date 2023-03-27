@@ -351,7 +351,7 @@ def assignLocation(piece, label):
 # Variable to store the number of examples to generate
 # Since we use this dataset for domain adaptation, all the examples will be in a training dataset
 # All the examples will have to be labelled.
-dataset_size = 500
+dataset_size = 10
 
 for i in range (dataset_size):
     
@@ -396,7 +396,8 @@ for i in range (dataset_size):
         light4.hide_render = False
     
     # Render the image and store it with labels
-    j= i+500
+    
+    j = i +500
     
     # Save the label file as .csv
     name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % j + ".npy"
@@ -404,5 +405,5 @@ for i in range (dataset_size):
     
     # Set the render settings
     bpy.context.scene.render.image_settings.file_format = 'PNG'
-    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i
+    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % j
     bpy.ops.render.render(write_still = 1)
