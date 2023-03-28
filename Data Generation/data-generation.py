@@ -351,7 +351,7 @@ def assignLocation(piece, label):
 # Variable to store the number of examples to generate
 # Since we use this dataset for domain adaptation, all the examples will be in a training dataset
 # All the examples will have to be labelled.
-dataset_size = 10
+dataset_size = 1000
 
 for i in range (dataset_size):
     
@@ -397,7 +397,7 @@ for i in range (dataset_size):
     
     # Render the image and store it with labels
     
-    j = i +500
+    j = i + 710
     
     # Save the label file as .csv
     name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % j + ".npy"
