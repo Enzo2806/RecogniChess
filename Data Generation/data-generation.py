@@ -397,7 +397,7 @@ for i in range (dataset_size):
     
     # Render the image and store it with labels
     
-    j = i + 710
+    j = i + 862
     
     # Save the label file as .csv
     name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % j + ".npy"
