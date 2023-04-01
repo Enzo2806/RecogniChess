@@ -2,3 +2,4 @@ myenv
 venv
 .idea
 CORAL.py
+__pycache__/
