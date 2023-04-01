@@ -5,7 +5,7 @@ import os
 
 # Create an empty array to store all images and their correpsonding labels / square emplacement names
 # We will append the labels and images to this array in the following loop
-final_array = np.array(["Example Number", "Image Path", "Pawn Label", "Square Name (One Hot Encoded)"], dtype = object)
+final_array = np.array(["Example Number", "Image", "Pawn Label", "Square Name (One Hot Encoded)"], dtype = object)
 
 # Import the data generated in Data Generation/Data Generated/
 for i in range (2):
