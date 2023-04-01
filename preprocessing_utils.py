@@ -10,7 +10,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import imshow
-# Better formatting
 np.set_printoptions(suppress=True, linewidth=200)  # Better formatting
 plt.rcParams['image.cmap'] = 'jet'  # Default colormap is jet
 
