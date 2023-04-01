@@ -1,20 +1,23 @@
-# coding=utf-8
+
+# This utility file is a modified version of the following code:
+# https://github.com/Elucidation/ChessboardDetect/blob/master/FindChessboards.py
+
+#
+# Imports
+#
 import PIL.Image
-import matplotlib.image as mpimg
-import scipy.ndimage
-import cv2  # For Sobel etc
-import glob
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure, imshow, axis
-from matplotlib.image import imread
-np.set_printoptions(suppress=True, linewidth=200)  # Better printing of arrays
+from matplotlib.pyplot import imshow
+np.set_printoptions(suppress=True, linewidth=200)  # Better formatting
 plt.rcParams['image.cmap'] = 'jet'  # Default colormap is jet
 
 
 # Saddle
 
 def getSaddle(gray_img):
+    # https://en.wikipedia.org/wiki/Sobel_operator
     img = gray_img.astype(np.float64)
     gx = cv2.Sobel(img, cv2.CV_64F, 1, 0)
     gy = cv2.Sobel(img, cv2.CV_64F, 0, 1)
@@ -71,6 +74,7 @@ def getMinSaddleDist(saddle_pts, pt):
 def simplifyContours(contours):
     for i in range(len(contours)):
         # Approximate contour and update in place
+        # https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
         contours[i] = cv2.approxPolyDP(
             contours[i], 0.04*cv2.arcLength(contours[i], True), True)
 
@@ -194,13 +198,20 @@ def pruneContours(contours, hierarchy, saddle):
 def getContours(img, edges, iters=10):
     # Morphological Gradient to get internal squares of canny edges.
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+
+    # https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
+    # MORPH_GRADIENT means The result will look like the outline of the object.
     edges_gradient = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
-    _, contours, hierarchy = cv2.findContours(
+
+    # https://docs.opencv.org/3.1.0/d4/d73/tutorial_py_contours_begin.html
+    contours, hierarchy = cv2.findContours(
         edges_gradient, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+
+    contours = list(contours)
 
     simplifyContours(contours)
 
-    return np.array(contours), hierarchy[0]
+    return np.array(contours,  dtype=object), hierarchy[0]
 
 
 # Corners
@@ -334,19 +345,24 @@ def getBestLines(img_warped):
     return (best_lines_x, best_lines_y)
 
 
-def loadImage(filepath):
+def loadImage(filepath, resolution=1000.0):
     img_orig = PIL.Image.open(filepath)
+
     img_width, img_height = img_orig.size
 
     # Resize
-    aspect_ratio = min(500.0/img_width, 500.0/img_height)
+    aspect_ratio = min(resolution/img_width, resolution/img_height)
     new_width, new_height = (
         (np.array(img_orig.size) * aspect_ratio)).astype(int)
     img = img_orig.resize((new_width, new_height), resample=PIL.Image.BILINEAR)
-    img = img.convert('L')  # grayscale
-    img = np.array(img)
 
-    return img
+    img_grey = img.convert('L')  # grayscale
+    img_grey = np.array(img_grey)
+
+    img_color = img.convert('RGB')  # color
+    img_color = np.array(img_color)
+
+    return img_grey, img_color
 
 
 def findChessboard(img, min_pts_needed=15, max_pts_needed=25):
@@ -385,9 +401,8 @@ def findChessboard(img, min_pts_needed=15, max_pts_needed=25):
             M, _ = generateNewBestFit(ideal_grid, grid_next, grid_good)
             # Check that a valid and reasonable M was returned
             if M is None or np.abs(M[0, 0] / M[1, 1]) > 15 or np.abs(M[1, 1] / M[0, 0]) > 15:
-                #             if M is None:
                 M = None
-                # print ("Failed to converge on this one")
+                print("Failed to converge on this one")
                 break
         if M is None:
             continue
@@ -432,9 +447,9 @@ def getBoardOutline(best_lines_x, best_lines_y, M):
 
 
 def processSingle(filename='input/img_10.png'):
-    img = loadImage(filename)
+    img, _ = loadImage(filename)
     M, ideal_grid, grid_next, grid_good, spts = findChessboard(img)
-    print(M)
+#   print(M)
 
     # View
     if M is not None:
@@ -450,7 +465,6 @@ def processSingle(filename='input/img_10.png'):
         plt.figure(figsize=(20, 20))
         plt.subplot(212)
         imshow(img_warp, cmap='Greys_r')
-    #     plt.figure(figsize=(20,10))
         [plt.axvline(line, color='red', lw=2) for line in best_lines_x]
         [plt.axhline(line, color='green', lw=2) for line in best_lines_y]
 
@@ -468,58 +482,58 @@ def processSingle(filename='input/img_10.png'):
         plt.show()
 
 
-def pre_process_test():
-    filenames = glob.glob('Real life data/8-8-8-2k5-2p3P1-p1b5-7P-1K1B4.JPG')
-    filenames = sorted(filenames)
-    print("Files: %s" % filenames)
-    fig = figure(figsize=(25, 25))
-    n = len(filenames)
-    if (n == 0):
-        print("No files found.")
-        return
-    col = 4
-    row = n/col
-    if (n % col != 0):
-        row += 1
+def process_image(filename, dest_path, plot_original=False):
+    img, img_orig = loadImage(filename)
+    # print(np.shape(img))
+    # print(np.shape(img_orig))
+    M, ideal_grid, grid_next, grid_good, spts = findChessboard(img)
+    # View
+    if M is not None:
+        # generate mapping for warping image
+        M, _ = generateNewBestFit((ideal_grid+8)*32, grid_next,
+                                  grid_good)
+        img_warp = cv2.warpPerspective(img, M, (17*32, 17*32),
+                                       flags=cv2.WARP_INVERSE_MAP)
 
-    for i in range(n):
-        filename = filenames[i]
-        print("Processing %d/%d : %s" % (i+1, n, filename))
+        best_lines_x, best_lines_y = getBestLines(img_warp)
 
-        img = loadImage(filename)
-        M, ideal_grid, grid_next, grid_good, spts = findChessboard(img)
+        xy_unwarp = getUnwarpedPoints(best_lines_x, best_lines_y, M)
+        board_outline_unwarp = getBoardOutline(best_lines_x, best_lines_y, M)
 
-        # View
-        if M is not None:
-            # generate mapping for warping image
-            M, _ = generateNewBestFit((ideal_grid+8)*32, grid_next, grid_good)
-            img_warp = cv2.warpPerspective(
-                img, M, (17*32, 17*32), flags=cv2.WARP_INVERSE_MAP)
+        side_len = 2048
+        myDPI = 192
+        pts_dest = np.array(
+            [[0, side_len], [side_len, side_len], [side_len, 0], [0, 0]])
 
-            best_lines_x, best_lines_y = getBestLines(img_warp)
-            xy_unwarp = getUnwarpedPoints(best_lines_x, best_lines_y, M)
-            board_outline_unwarp = getBoardOutline(
-                best_lines_x, best_lines_y, M)
+        # calculate homography
+        h, status = cv2.findHomography(board_outline_unwarp[0:4], pts_dest)
 
-            a = fig.add_subplot(row, col, i+1)
+        im_out = cv2.warpPerspective(
+            np.squeeze(img_orig), h, (side_len, side_len))
 
-            axs = plt.axis()
-            imshow(img, cmap='Greys_r')
-            axs = plt.axis()
-            plt.plot(xy_unwarp[:, 0], xy_unwarp[:, 1], 'r.',)
+        # write warped to file
+        # fig = plt.figure(frameon=False, figsize=(side_len/myDPI,side_len/myDPI))
+        fig = plt.figure(frameon=False, figsize=(30, 30))
+        im_plot = imshow(im_out, cmap='Greys_r', aspect='auto')
+        ax = plt.gca()
+        ax.set_axis_off()
+        fname = filename.split('.')[-2].split('/')[-1]
+        save_dest = f'{dest_path}/{fname}.png'
+        extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        plt.savefig(save_dest, bbox_inches=extent, pad_inches=0)
+
+        if plot_original:
+            fig = plt.figure(frameon=False, figsize=(30, 42))
+            im_plot = imshow(img_orig, cmap='Greys_r', aspect='auto')
             plt.plot(
-                board_outline_unwarp[:, 0], board_outline_unwarp[:, 1], 'ro-', markersize=5, linewidth=3)
-            plt.axis(axs)
-            plt.title("%s :  N matches=%d" % (filename, np.sum(grid_good)))
-            axis('off')
-            print("    N good pts %d" % np.sum(grid_good))
+                board_outline_unwarp[:, 0], board_outline_unwarp[:, 1], 'ro-', markersize=5, linewidth=5)
 
-        else:
-            a = fig.add_subplot(row, col, i+1)
-            imshow(img, cmap='Greys_r')
-            plt.title("%s : Fail" % (filename))
-            axis('off')
-            print("    Fail")
+            ax = plt.gca()
+            ax.set_axis_off()
+            fname = filename.split('.')[-2].split('/')[-1]
+            save_dest = f'{dest_path}/ORIGINAL_{fname}.png'
+            extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+            plt.savefig(save_dest, bbox_inches=extent, pad_inches=0)
 
-    plt.savefig('result.png', bbox_inches='tight')
-    plt.show()
+    else:
+        print(f'Could not preprocess: {filename}')
