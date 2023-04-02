@@ -13,8 +13,13 @@ from matplotlib.pyplot import imshow
 np.set_printoptions(suppress=True, linewidth=200)  # Better formatting
 plt.rcParams['image.cmap'] = 'jet'  # Default colormap is jet
 
+#
+# Helpers
+#
 
-# Saddle
+
+# Saddles
+
 
 def getSaddle(gray_img):
     # https://en.wikipedia.org/wiki/Sobel_operator
@@ -68,7 +73,8 @@ def getMinSaddleDist(saddle_pts, pt):
             best_pt = saddle_pt
     return best_pt, np.sqrt(best_dist)
 
-# Contour
+
+# Contours
 
 
 def simplifyContours(contours):
@@ -216,6 +222,7 @@ def getContours(img, edges, iters=10):
 
 # Corners
 
+
 def updateCorners(contour, saddle):
     ws = 4  # half window size (+1)
     new_contour = contour.copy()
@@ -238,6 +245,7 @@ def updateCorners(contour, saddle):
 
 # Grid
 
+
 def getIdentityGrid(N):
     a = np.arange(N)
     b = a.copy()
@@ -251,14 +259,12 @@ def getChessGrid(quad):
     quadB = getIdentityGrid(4)-1
     quadB_pad = np.pad(quadB, ((0, 0), (0, 1)), 'constant', constant_values=1)
     C_thing = (np.matrix(M)*quadB_pad.T).T
-#     bad = (C_thing[:,2] < 0.3).A.flatten()
     C_thing[:, :2] /= C_thing[:, 2]
     return C_thing
 
 
 def findGoodPoints(grid, spts, max_px_dist=5):
-    # Snap grid points to closest saddle point within range and return updated
-    # grid = Nx2 points on grid
+    # Snap grid points to closest saddle point within range and return updated grid = Nx2 points on grid
     new_grid = grid.copy()
     chosen_spts = set()
     N = len(new_grid)
@@ -345,6 +351,9 @@ def getBestLines(img_warped):
     return (best_lines_x, best_lines_y)
 
 
+# Image processing
+
+
 def loadImage(filepath, resolution=1000.0):
     img_orig = PIL.Image.open(filepath)
 
@@ -366,26 +375,26 @@ def loadImage(filepath, resolution=1000.0):
 
 
 def findChessboard(img, min_pts_needed=15, max_pts_needed=25):
-    blur_img = cv2.blur(img, (3, 3))  # Blur it
-    saddle = getSaddle(blur_img)
-    saddle = -saddle
-    saddle[saddle < 0] = 0
-    pruneSaddle(saddle)
-    s2 = nonmax_sup(saddle)
-    s2[s2 < 100000] = 0
-    spts = np.argwhere(s2)
+    blur_img = cv2.blur(img, (3, 3))  # Blur the image
+    saddle = getSaddle(blur_img)  # Get the saddle points
+    saddle = -saddle  # Invert the saddle points
+    saddle[saddle < 0] = 0  # Remove negative values
+    pruneSaddle(saddle)  # Prune the saddle points
+    s2 = nonmax_sup(saddle)  # Non-maximum suppression
+    s2[s2 < 100000] = 0  # Remove small values
+    spts = np.argwhere(s2)  # Get the saddle points
 
-    edges = cv2.Canny(img, 20, 250)
-    contours_all, hierarchy = getContours(img, edges)
-    contours, hierarchy = pruneContours(contours_all, hierarchy, saddle)
+    edges = cv2.Canny(img, 20, 250)  # Get the edges (Canny edge detection)
+    contours_all, hierarchy = getContours(img, edges)  # Get the contours
+    contours, hierarchy = pruneContours(
+        contours_all, hierarchy, saddle)  # Prune the contours
 
-    curr_num_good = 0
+    curr_num_good = 0  # Current number of good points
     curr_grid_next = None
     curr_grid_good = None
     curr_M = None
 
     for cnt_i in range(len(contours)):
-        # print ("On Contour %d" % cnt_i)
         cnt = contours[cnt_i].squeeze()
         grid_curr, ideal_grid, M = getInitChessGrid(cnt)
 
@@ -393,13 +402,10 @@ def findChessboard(img, min_pts_needed=15, max_pts_needed=25):
             grid_curr, ideal_grid, _ = makeChessGrid(M, N=(grid_i+1))
             grid_next, grid_good = findGoodPoints(grid_curr, spts)
             num_good = np.sum(grid_good)
-            # print('I %d (N=%d), num_good: %d of %d' % (grid_i, grid_i+1, num_good, grid_good.size))
             if num_good < 4:
                 M = None
-                # print ("Failed to converge on this one")
                 break
             M, _ = generateNewBestFit(ideal_grid, grid_next, grid_good)
-            # Check that a valid and reasonable M was returned
             if M is None or np.abs(M[0, 0] / M[1, 1]) > 15 or np.abs(M[1, 1] / M[0, 0]) > 15:
                 M = None
                 print("Failed to converge on this one")
@@ -432,7 +438,6 @@ def getUnwarpedPoints(best_lines_x, best_lines_y, M):
     xy_unwarp = cv2.perspectiveTransform(xy, M)
     return xy_unwarp[0, :, :]
 
-
 def getBoardOutline(best_lines_x, best_lines_y, M):
     d = best_lines_x[1] - best_lines_x[0]
     ax = [best_lines_x[0]-d, best_lines_x[-1]+d]
@@ -446,94 +451,159 @@ def getBoardOutline(best_lines_x, best_lines_y, M):
     return xy_unwarp[0, :, :]
 
 
-def processSingle(filename='input/img_10.png'):
-    img, _ = loadImage(filename)
-    M, ideal_grid, grid_next, grid_good, spts = findChessboard(img)
-#   print(M)
+# To warp a single point given the homography matrix H
+# https://stackoverflow.com/questions/57399915/how-do-i-determine-the-locations-of-the-points-after-perspective-transform-in-t
+# spts is a 2D numpy array of saddle points, H is the homography matrix
+def warpPoints(pts, H):
+    
+    # Array to store the warped points
+    pts_warped = np.zeros(pts.shape)
 
-    # View
+    # Iterate through the saddle points
+    for i in range(len(pts)):
+        
+        p = pts[i]
+        
+        # x coordinate of warped point
+        pts_warped[i][0] = (H[0][0]*p[0] + H[0][1]*p[1] + H[0][2]) / \
+            ((H[2][0]*p[0] + H[2][1]*p[1] + H[2][2]))
+        
+        # y coordinate of warped point
+        pts_warped[i][1] = (H[1][0]*p[0] + H[1][1]*p[1] + H[1][2]) / \
+            ((H[2][0]*p[0] + H[2][1]*p[1] + H[2][2]))
+
+    return pts_warped
+
+# Putting it all together
+
+# def processSingle(filename):
+#     img, _ = loadImage(filename)
+#     M, ideal_grid, grid_next, grid_good, spts = findChessboard(img)
+
+#     # View
+#     if M is not None:
+        
+#         # Generate the warping matrix (Mapping)
+#         M, _ = generateNewBestFit((ideal_grid+8)*32, grid_next, grid_good)
+#         print(M)
+#         img_warp = cv2.warpPerspective(
+#             img, M, (17*32, 17*32), flags=cv2.WARP_INVERSE_MAP)
+
+#         best_lines_x, best_lines_y = getBestLines(img_warp)
+#         xy_unwarp = getUnwarpedPoints(best_lines_x, best_lines_y, M)
+
+#         plt.figure(figsize=(20, 20))
+#         plt.subplot(212)
+#         imshow(img_warp, cmap='Greys_r')
+#         [plt.axvline(line, color='red', lw=2) for line in best_lines_x]
+#         [plt.axhline(line, color='green', lw=2) for line in best_lines_y]
+
+#         plt.subplot(211)
+#         axs = plt.axis()
+#         imshow(img, cmap='Greys_r')
+#         axs = plt.axis()
+#         plt.plot(spts[:, 1], spts[:, 0], 'o')
+#         plt.plot(grid_next[:, 0].A, grid_next[:, 1].A, 'rs')
+#         plt.plot(grid_next[grid_good, 0].A,
+#                  grid_next[grid_good, 1].A, 'rs', markersize=12)
+#         plt.plot(xy_unwarp[:, 0], xy_unwarp[:, 1], 'go', markersize=15)
+#         plt.axis(axs)
+#         # plt.savefig('result_single.png', bbox_inches='tight')
+#         plt.show()
+
+
+def warp_image(filename, plot=False):
+
+    # Load the image and find the chessboard on it
+    img, img_orig = loadImage(filename)
+    M, ideal_grid, grid_next, grid_good, spts = findChessboard(
+        img)  # M is the warp matrix
+
+    # Check the call succeeded (Warp matrix is not none)
     if M is not None:
-        # generate mapping for warping image
+
+        # Generate a mapping to warp (Crop) the image
         M, _ = generateNewBestFit((ideal_grid+8)*32, grid_next, grid_good)
-        print(M)
         img_warp = cv2.warpPerspective(
             img, M, (17*32, 17*32), flags=cv2.WARP_INVERSE_MAP)
 
-        best_lines_x, best_lines_y = getBestLines(img_warp)
-        xy_unwarp = getUnwarpedPoints(best_lines_x, best_lines_y, M)
-
-        plt.figure(figsize=(20, 20))
-        plt.subplot(212)
-        imshow(img_warp, cmap='Greys_r')
-        [plt.axvline(line, color='red', lw=2) for line in best_lines_x]
-        [plt.axhline(line, color='green', lw=2) for line in best_lines_y]
-
-        plt.subplot(211)
-        axs = plt.axis()
-        imshow(img, cmap='Greys_r')
-        axs = plt.axis()
-        plt.plot(spts[:, 1], spts[:, 0], 'o')
-        plt.plot(grid_next[:, 0].A, grid_next[:, 1].A, 'rs')
-        plt.plot(grid_next[grid_good, 0].A,
-                 grid_next[grid_good, 1].A, 'rs', markersize=12)
-        plt.plot(xy_unwarp[:, 0], xy_unwarp[:, 1], 'go', markersize=15)
-        plt.axis(axs)
-        plt.savefig('result_single.png', bbox_inches='tight')
-        plt.show()
-
-
-def process_image(filename, dest_path, plot_original=False):
-    img, img_orig = loadImage(filename)
-    # print(np.shape(img))
-    # print(np.shape(img_orig))
-    M, ideal_grid, grid_next, grid_good, spts = findChessboard(img)
-    # View
-    if M is not None:
-        # generate mapping for warping image
-        M, _ = generateNewBestFit((ideal_grid+8)*32, grid_next,
-                                  grid_good)
-        img_warp = cv2.warpPerspective(img, M, (17*32, 17*32),
-                                       flags=cv2.WARP_INVERSE_MAP)
-
+        # Find the best lines that cut the board
         best_lines_x, best_lines_y = getBestLines(img_warp)
 
-        xy_unwarp = getUnwarpedPoints(best_lines_x, best_lines_y, M)
+        # Get the unwarped points
+        inner_corners_unwarped = getUnwarpedPoints(best_lines_x, best_lines_y, M)
         board_outline_unwarp = getBoardOutline(best_lines_x, best_lines_y, M)
 
         side_len = 2048
-        myDPI = 192
         pts_dest = np.array(
             [[0, side_len], [side_len, side_len], [side_len, 0], [0, 0]])
 
-        # calculate homography
-        h, status = cv2.findHomography(board_outline_unwarp[0:4], pts_dest)
-
+        # Calculate homography matrix and use it to warp the image
+        h, _ = cv2.findHomography(board_outline_unwarp[0:4], pts_dest)
         im_out = cv2.warpPerspective(
             np.squeeze(img_orig), h, (side_len, side_len))
-
-        # write warped to file
-        # fig = plt.figure(frameon=False, figsize=(side_len/myDPI,side_len/myDPI))
-        fig = plt.figure(frameon=False, figsize=(30, 30))
-        im_plot = imshow(im_out, cmap='Greys_r', aspect='auto')
-        ax = plt.gca()
-        ax.set_axis_off()
-        fname = filename.split('.')[-2].split('/')[-1]
-        save_dest = f'{dest_path}/{fname}.png'
-        extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-        plt.savefig(save_dest, bbox_inches=extent, pad_inches=0)
-
-        if plot_original:
-            fig = plt.figure(frameon=False, figsize=(30, 42))
-            im_plot = imshow(img_orig, cmap='Greys_r', aspect='auto')
-            plt.plot(
-                board_outline_unwarp[:, 0], board_outline_unwarp[:, 1], 'ro-', markersize=5, linewidth=5)
-
+        
+        # Warp the corners of the board using the homography matrix
+        inner_corners_warped = warpPoints(inner_corners_unwarped, h)
+        
+        # Plot if required
+        if plot:
+            
+            # Plot the original image with the detected corners, best lines, and outer contour
+            plt.figure(frameon=False, figsize=(20, 20))
+            imshow(img_orig, cmap='Greys_r')
+            plt.plot(board_outline_unwarp[:, 0], board_outline_unwarp[:, 1], 'ro-', markersize=5, linewidth=5)
+            plt.plot(grid_next[grid_good, 0].A, grid_next[grid_good, 1].A, 'gs', markersize=12)
+            # for line in best_lines_x:
+            #     plt.axvline(line, color='red', lw=2)
+            # for line in best_lines_y:
+            #     plt.axhline(line, color='green', lw=2)
             ax = plt.gca()
             ax.set_axis_off()
-            fname = filename.split('.')[-2].split('/')[-1]
-            save_dest = f'{dest_path}/ORIGINAL_{fname}.png'
-            extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-            plt.savefig(save_dest, bbox_inches=extent, pad_inches=0)
 
+            # Plot the final image with the warped corners
+            plt.figure(frameon=False, figsize=(30, 30))
+            imshow(im_out, cmap='Greys_r', aspect='auto')
+            plt.plot(inner_corners_warped[:, 0],
+                     inner_corners_warped[:, 1], 'bo', markersize=30)  # Plot the detected corners of the image for display
+            ax = plt.gca()
+            ax.set_axis_off()
+            
+        return im_out
+
+    # If the call didn't succeed, print an error message
     else:
         print(f'Could not preprocess: {filename}')
+        return None
+
+def crop_individual_squares(warped_image):
+
+    # Extract the image's width and height
+    image_height = int(warped_image.shape[0])
+    image_width = int(warped_image.shape[1])
+
+    # Round down to the nearest multiple of 8
+    image_height = image_height - (image_height % 8)
+    image_width = image_width - (image_width % 8)
+
+    # Compute the side length of a single square
+    square_height = image_height // 8
+    square_width = image_width // 8
+
+    # The side of a square will be the minimum of the height and width
+    square_side = min(square_height, square_width)
+
+    # Define an array to hold the resulting image's individual squares
+    # The squares are indexed from 0 to 63, with 0 being a1, 1 being a2, ..., 8 being b1, ..., 63 being h8
+    squares = []
+
+    # To keep track of square label
+    for i in range(8):
+        for j in range(8):
+            square = warped_image[
+                (8-j-1)*square_side:(8-j)*square_side, i*square_side:(i+1)*square_side]
+            square = cv2.resize(square, (130, 130)) # We use an aspect ratio of 130 * 130 for an individual square
+            squares.append(square)
+
+    # Return the array of squares
+    return squares
