@@ -4,7 +4,7 @@ import cv2
 
 
 # Import the data generated in Data Generation/Data Generated/
-for i in range (2500, 3500):
+for i in range (3500, 4501):
     # Set the path to the label and image
     labelpath= "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
     imagepath= "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i + ".png"
