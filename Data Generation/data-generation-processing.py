@@ -1,14 +1,10 @@
 import numpy as np
 from PIL import Image
-import os
+import cv2
 
-
-# Create an empty array to store all images and their correpsonding labels / square emplacement names
-# We will append the labels and images to this array in the following loop
-final_array = np.array(["Example Number", "Image", "Piece Label", "Square Name (One Hot Encoded)"], dtype = object)
 
 # Import the data generated in Data Generation/Data Generated/
-for i in range (2):
+for i in range (4501):
     # Set the path to the label and image
     labelpath= "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
     imagepath= "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i + ".png"
@@ -16,6 +12,10 @@ for i in range (2):
     # Load the image and label
     label = np.load(labelpath)
     image = Image.open(imagepath)
+
+    image = np.asarray(image)
+
+    image = cv2.blur(image, (5,5))
 
     # Get the dimensions of the individual squares
     # These dimensions are used to crop the image into individual squares
@@ -110,6 +110,9 @@ for i in range (2):
     H7 = (vertical_eighth_border, horizontal_second_border, vertical_right_border, horizontal_third_border)
     H8 = (vertical_eighth_border, horizontal_top_broder, vertical_right_border, horizontal_second_border)
 
+    # Reconvert the image to pillow  from numpy
+    image = Image.fromarray(image)
+
     # Crop the image into 64 pieces
     # Store each cropped square into a variable
     A1 = image.crop(A1)
@@ -179,6 +182,11 @@ for i in range (2):
 
     # create an array with all the cropped images:
     images = [A1, A2, A3, A4, A5, A6, A7, A8, B1, B2, B3, B4, B5, B6, B7, B8, C1, C2, C3, C4, C5, C6, C7, C8, D1, D2, D3, D4, D5, D6, D7, D8, E1, E2, E3, E4, E5, E6, E7, E8, F1, F2, F3, F4, F5, F6, F7, F8, G1, G2, G3, G4, G5, G6, G7, G8, H1, H2, H3, H4, H5, H6, H7, H8]
+    
+    # Create an empty array to store this training exmaples' images and their correpsonding labels / square emplacement names
+    # We store a new array for each training example, eahc array has all square names, the image of the square and label
+    # We will append the labels and images to this array in the following loop
+    final_array = np.array(["Square Name", "Image", "Piece Label"], dtype = object)
 
     # compute the average size of the images
     # total_width = 0
@@ -191,7 +199,6 @@ for i in range (2):
     # print(average_width, average_height)
     # RESULT is approximately 130x130, so we will resize all images to 130x130
 
-
     # loop through all the images and resize them
     # to 130x130 (computed average size above)
     # Save them in new folder
@@ -200,13 +207,13 @@ for i in range (2):
         # Causes warning, ignore it
         img = img.resize((130, 130), Image.ANTIALIAS)
 
-        # Get the variable name of the image to save it in the new folder
-        variable_name = label[j+1][0]
+        # Get the square name of the image to save it in the new folder
+        square_name = label[j+1][0]
 
         # GOAL: Save a numpy array containing the training example number, image, the label of the image and the square name (one hot encoded)
 
         # get the label of the pawn shown in image
-        label_square = label[np.where(label==variable_name)[0]][0][1]
+        label_square = label[j+1][1]
 
         # Convert the label of the square to a fixed number following this mapping:
         # Piece to square label conversion:
@@ -250,19 +257,12 @@ for i in range (2):
         elif label_square == 'Black King':
             label_square = 12
         
-        # Convert square name to one hot encoding
-        # To convert it to one hot encoding, we just have to convert j to one hot encoding (64 possible values)
-        square_name = np.zeros(64)
-        square_name[j] = 1
-
-        # Save the training example name
-        example_number = "EX_%04d" % i
 
         # Create a numpy array with the tarining example name, the image, the label of the image and the square name (one hot encoded))
         # Concatenate this new numpy array to the global numpy array we will save later
-        final_array = np.vstack([final_array, np.array([example_number, np.array(img), label_square, square_name], dtype = object)])
+        final_array = np.vstack([final_array, np.array([square_name, np.array(img), label_square], dtype = object)])
 
-# Save the numpy array containing all images, labels and square names in a new folder
-label_folder_path = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Dataset PreProcessed/generatedData.npy"
-np.save(label_folder_path, final_array, allow_pickle=True)
+    # Save the numpy array containing all images, labels and square names in a new folder
+    label_folder_path = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Dataset PreProcessed/EX_%04d"%i+".npy"
+    np.save(label_folder_path, final_array, allow_pickle=True)
 
