@@ -5,7 +5,7 @@ import os
 
 
 # Import the data generated in Data Generation/Data Generated/
-for i in range (1060, 2000):
+for i in range (0, 4501):
     # Set the path to the label and image
     labelpath= os.getcwd()+"/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
     imagepath= os.getcwd()+"/Data Generation/Data Generated/Images/EX_%04d" % i + ".png"
@@ -272,6 +272,6 @@ for i in range (1060, 2000):
     image_path = folder_path + "Images/EX_%04d"%i+".npy"
     label_path = folder_path + "Labels/EX_%04d"%i+".npy"
     square_name_path = folder_path + "Square Names/EX_%04d"%i+".npy"
-    np.save(image_path, final_array_examples, allow_pickle=True)
-    np.save(label_path, final_array_labels, allow_pickle=True)
-    np.save(square_name_path, final_array_square_names, allow_pickle=True)
+    np.savez_compressed(image_path, final_array_examples, allow_pickle=True)
+    np.savez_compressed(label_path, final_array_labels, allow_pickle=True)
+    np.savez_compressed(square_name_path, final_array_square_names, allow_pickle=True)
