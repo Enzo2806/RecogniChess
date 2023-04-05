@@ -6,7 +6,7 @@ import os
 
 
 # Import the data generated in Data Generation/Data Generated/
-for i in range (0, 1000):
+for i in range (727, 1000):
     # Set the path to the label and image
     labelpath= os.getcwd()+"/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
     imagepath= os.getcwd()+"/Data Generation/Data Generated/Images/EX_%04d" % i + ".png"
