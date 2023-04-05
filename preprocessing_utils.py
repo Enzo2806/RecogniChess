@@ -474,44 +474,6 @@ def warpPoints(pts, H):
 
     return pts_warped
 
-# Putting it all together
-
-# def processSingle(filename):
-#     img, _ = loadImage(filename)
-#     M, ideal_grid, grid_next, grid_good, spts = findChessboard(img)
-
-#     # View
-#     if M is not None:
-        
-#         # Generate the warping matrix (Mapping)
-#         M, _ = generateNewBestFit((ideal_grid+8)*32, grid_next, grid_good)
-#         print(M)
-#         img_warp = cv2.warpPerspective(
-#             img, M, (17*32, 17*32), flags=cv2.WARP_INVERSE_MAP)
-
-#         best_lines_x, best_lines_y = getBestLines(img_warp)
-#         xy_unwarp = getUnwarpedPoints(best_lines_x, best_lines_y, M)
-
-#         plt.figure(figsize=(20, 20))
-#         plt.subplot(212)
-#         imshow(img_warp, cmap='Greys_r')
-#         [plt.axvline(line, color='red', lw=2) for line in best_lines_x]
-#         [plt.axhline(line, color='green', lw=2) for line in best_lines_y]
-
-#         plt.subplot(211)
-#         axs = plt.axis()
-#         imshow(img, cmap='Greys_r')
-#         axs = plt.axis()
-#         plt.plot(spts[:, 1], spts[:, 0], 'o')
-#         plt.plot(grid_next[:, 0].A, grid_next[:, 1].A, 'rs')
-#         plt.plot(grid_next[grid_good, 0].A,
-#                  grid_next[grid_good, 1].A, 'rs', markersize=12)
-#         plt.plot(xy_unwarp[:, 0], xy_unwarp[:, 1], 'go', markersize=15)
-#         plt.axis(axs)
-#         # plt.savefig('result_single.png', bbox_inches='tight')
-#         plt.show()
-
-
 def warp_image(filename, plot=False):
 
     # Load the image and find the chessboard on it
