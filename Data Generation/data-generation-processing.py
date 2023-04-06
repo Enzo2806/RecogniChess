@@ -1,15 +1,8 @@
 import numpy as np
 from PIL import Image, ImageFilter
 import os
-from sklearn.model_selection import train_test_split
-from torch.utils.data import TensorDataset, DataLoader
 import torch
-import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
 
-# Define a transform to convert PIL 
-# image to a Torch tensor
-transform = transforms.ToTensor()
 
 # Get the dimensions of the individual squares
 # These dimensions are used to crop the image into individual squares
@@ -105,26 +98,66 @@ H7_crop = (vertical_eighth_border, horizontal_second_border, vertical_right_bord
 H8_crop = (vertical_eighth_border, horizontal_top_broder, vertical_right_border, horizontal_second_border)
 
 min_range = 0
-max_range = 1000
+max_range = 2000
 imported_range = max_range - min_range
 
-# Initialize empty tensors for X and y for train, validation, and test sets
-X_generated_train, y_generated_train = torch.Tensor([]), torch.Tensor([])
-train_count = 0
-
-X_generated_val, y_generated_val = torch.Tensor([]), torch.Tensor([])
-X_generated_test, y_generated_test = torch.Tensor([]), torch.Tensor([])
+# Initialize empty tensors for y arrays (one for labels one for square names)
+y_piece_generated, y_squarename_generated = torch.Tensor([]), torch.Tensor([])
 
 # Import the data generated in Data Generation/Data Generated/
 label_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Labels")
 image_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Images")
 
-# Save the dataloaders arrays 
-folder_path = os.getcwd() + "/Data Generation/Pre Processed Data Generated/Square Images/"
+save_folder_path = os.path.join(os.getcwd(), "Data Generation/Pre Processed Data Generated/Square Images/")
+
+def convert_label(label_square):
+    # Convert the label of the square to a fixed number following this mapping:
+    # Piece to square label conversion:
+    # Empty: 0, 
+    # White pawn: 1,
+    # White knight: 2, 
+    # White bishop: 3, 
+    # White rook: 4, 
+    # White queen: 5, 
+    # White king: 6, 
+    # Black pawn: 7, 
+    # Black knight: 8, 
+    # Black bishop: 9, 
+    # Black rook: 10, 
+    # Black queen: 11, 
+    # Black king: 12
+    if label_square == '':
+        label_square = 0
+    elif label_square == 'White Pawn':
+        label_square = 1
+    elif label_square == 'White Knight':
+        label_square = 2
+    elif label_square == 'White Bishop':
+        label_square = 3
+    elif label_square == 'White Rook':
+        label_square = 4
+    elif label_square == 'White Queen':
+        label_square = 5
+    elif label_square == 'White King':
+        label_square = 6
+    elif label_square == 'Black Pawn':
+        label_square = 7
+    elif label_square == 'Black Knight':
+        label_square = 8
+    elif label_square == 'Black Bishop':
+        label_square = 9
+    elif label_square == 'Black Rook':
+        label_square = 10
+    elif label_square == 'Black Queen':
+        label_square = 11
+    elif label_square == 'Black King':
+        label_square = 12
+    return label_square
+
+np_convert_label = np.vectorize(convert_label)
 
 # Loop over training examples
 for i in range (min_range, max_range):
-    print(i)
     # Set the path to the label and image
     label_path = os.path.join(label_folder, "EX_%04d.npy" % i)
     image_path = os.path.join(image_folder, "EX_%04d.png" % i)
@@ -207,120 +240,44 @@ for i in range (min_range, max_range):
     # create an array with all the cropped images:
     images = [A1, A2, A3, A4, A5, A6, A7, A8, B1, B2, B3, B4, B5, B6, B7, B8, C1, C2, C3, C4, C5, C6, C7, C8, D1, D2, D3, D4, D5, D6, D7, D8, E1, E2, E3, E4, E5, E6, E7, E8, F1, F2, F3, F4, F5, F6, F7, F8, G1, G2, G3, G4, G5, G6, G7, G8, H1, H2, H3, H4, H5, H6, H7, H8]
     
-    final_array_square_names = np.array([], dtype = np.str0)
-
-    # compute the average size of the images
-    # total_width = 0
-    # total_height = 0
-    # for img in images:
-    #     total_width += img.size[0]
-    #     total_height += img.size[1]
-    # average_width = total_width / len(images)
-    # average_height = total_height / len(images)
-    # print(average_width, average_height)
-    # RESULT is approximately 130x130, so we will resize all images to 130x130
+    y_piece_generated = torch.cat((y_piece_generated, torch.tensor(np_convert_label(label[1:, 1]))))
 
     # loop through all the images and resize them
-    # to 130x130 (computed average size above)
+    # to 100x100 pixels
     # Save them in new folder in array
     for j, img in enumerate(images):
-        # resize all images to 130x130 pixels
-        # Causes warning, ignore it
-        img = img.resize((130, 130))
-        
+        # resize all images to 100x100 pixels
+        img = img.resize((100, 100))
 
-        # GOAL: Save one numpy array containing the training example images and one coantaining the label of the image
+        # Convert the image to Square Image folder
+        img.save(save_folder_path+'EX_%06d' % (i*64+j) + '.png')
 
-        # get the label of the pawn shown in image
-        label_square = label[j+1][1]
-        
-        # get the name of the square
-        square_name = label[j+1][0]
+print('y_piece_generated shape:', np.array(y_piece_generated).shape)
 
-        # Convert the label of the square to a fixed number following this mapping:
-        # Piece to square label conversion:
-        # Empty: 0, 
-        # White pawn: 1,
-        # White knight: 2, 
-        # White bishop: 3, 
-        # White rook: 4, 
-        # White queen: 5, 
-        # White king: 6, 
-        # Black pawn: 7, 
-        # Black knight: 8, 
-        # Black bishop: 9, 
-        # Black rook: 10, 
-        # Black queen: 11, 
-        # Black king: 12
-        if label_square == '':
-            label_square = 0
-        elif label_square == 'White Pawn':
-            label_square = 1
-        elif label_square == 'White Knight':
-            label_square = 2
-        elif label_square == 'White Bishop':
-            label_square = 3
-        elif label_square == 'White Rook':
-            label_square = 4
-        elif label_square == 'White Queen':
-            label_square = 5
-        elif label_square == 'White King':
-            label_square = 6
-        elif label_square == 'Black Pawn':
-            label_square = 7
-        elif label_square == 'Black Knight':
-            label_square = 8
-        elif label_square == 'Black Bishop':
-            label_square = 9
-        elif label_square == 'Black Rook':
-            label_square = 10
-        elif label_square == 'Black Queen':
-            label_square = 11
-        elif label_square == 'Black King':
-            label_square = 12
+np.savez_compressed(save_folder_path+'y_piece_generated', y_piece_generated)
 
-        # Append the training example to the corresponding list or array
-        if j % 10 == 8:  # add to validation set
-            img.save()
-            y_generated_val = torch.cat((y_generated_val, torch.tensor([label_square])))
-        elif j % 10 == 9:  # add to test set
-            X_generated_test = torch.cat((X_generated_test, transform(img).unsqueeze(0)/ 255))
-            y_generated_test = torch.cat((y_generated_test, torch.tensor([label_square])))
-        else:  # add to training set
-            X_generated_train = torch.cat((X_generated_train, (transform(img).unsqueeze(0)/ 255)))
-            y_generated_train = torch.cat((y_generated_train, torch.tensor([label_square])))
+# # # split the dataset into train, validation, and test sets
+# # X_generated_train_val, X_generated_test, y_generated_train_val, y_generated_test = train_test_split(X_generated, y_generated, test_size=0.1, random_state=0)
+# # X_generated_train, X_generated_val, y_generated_train, y_generated_val = train_test_split(X_generated_train_val, y_generated_train_val, test_size=0.1/(0.8+0.1), random_state=0)
 
-        # Create a numpy array with the training example name, the image, the label of the image and the square name (one hot encoded))
-        # X_generated[i*64+j]= img
-        # y_generated[i*64+j] = label_square
-        # final_array_square_names = np.append(final_array_square_names, square_name)
+# batch_size = 4
 
-print('X_generated_train shape:', np.array(X_generated_train).shape)
-print('y_generated_train shape:', np.array(y_generated_train).shape)
+# # Create Tensor datasets
+# train_data = TensorDataset(X_generated_train, y_generated_train)
+# val_data = TensorDataset(X_generated_val, y_generated_val)
+# test_data = TensorDataset(X_generated_test, y_generated_test)
+
+# # Create data loaders
+# train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+# val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
+# test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
 
 
-# # split the dataset into train, validation, and test sets
-# X_generated_train_val, X_generated_test, y_generated_train_val, y_generated_test = train_test_split(X_generated, y_generated, test_size=0.1, random_state=0)
-# X_generated_train, X_generated_val, y_generated_train, y_generated_val = train_test_split(X_generated_train_val, y_generated_train_val, test_size=0.1/(0.8+0.1), random_state=0)
+# print(f"Number of training examples: {len(train_loader)*batch_size}")
+# print(f"Number of testing examples: {len(val_loader)*batch_size}")
+# print(f"Number of validation examples: {len(test_loader)*batch_size}")
 
-batch_size = 4
-
-# Create Tensor datasets
-train_data = TensorDataset(X_generated_train, y_generated_train)
-val_data = TensorDataset(X_generated_val, y_generated_val)
-test_data = TensorDataset(X_generated_test, y_generated_test)
-
-# Create data loaders
-train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
-
-
-print(f"Number of training examples: {len(train_loader)*batch_size}")
-print(f"Number of testing examples: {len(val_loader)*batch_size}")
-print(f"Number of validation examples: {len(test_loader)*batch_size}")
-
-# save the dataloader to disk
-torch.save(train_loader, folder_path+'train_generated_batch='+str(batch_size)+'.pt')
-torch.save(val_loader, folder_path+'val_generated_batch='+str(batch_size)+'.pt')
-torch.save(test_loader, folder_path+'test_generated_batch='+str(batch_size)+'.pt')
+# # save the dataloader to disk
+# torch.save(train_loader, folder_path+'train_generated_batch='+str(batch_size)+'.pt')
+# torch.save(val_loader, folder_path+'val_generated_batch='+str(batch_size)+'.pt')
+# torch.save(test_loader, folder_path+'test_generated_batch='+str(batch_size)+'.pt')
