@@ -98,11 +98,11 @@ H7_crop = (vertical_eighth_border, horizontal_second_border, vertical_right_bord
 H8_crop = (vertical_eighth_border, horizontal_top_broder, vertical_right_border, horizontal_second_border)
 
 min_range = 0
-max_range = 2000
+max_range = 4501
 imported_range = max_range - min_range
 
 # Initialize empty tensors for y arrays (one for labels one for square names)
-y_piece_generated, y_squarename_generated = torch.Tensor([]), torch.Tensor([])
+y_piece_generated = torch.Tensor(())
 
 # Import the data generated in Data Generation/Data Generated/
 label_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Labels")
