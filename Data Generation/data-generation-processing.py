@@ -240,7 +240,7 @@ for i in range (min_range, max_range):
     # create an array with all the cropped images:
     images = [A1, A2, A3, A4, A5, A6, A7, A8, B1, B2, B3, B4, B5, B6, B7, B8, C1, C2, C3, C4, C5, C6, C7, C8, D1, D2, D3, D4, D5, D6, D7, D8, E1, E2, E3, E4, E5, E6, E7, E8, F1, F2, F3, F4, F5, F6, F7, F8, G1, G2, G3, G4, G5, G6, G7, G8, H1, H2, H3, H4, H5, H6, H7, H8]
     
-    y_piece_generated = torch.cat((y_piece_generated, torch.tensor(np_convert_label(label[1:, 1]))))
+    y_piece_generated = torch.cat((y_piece_generated, torch.tensor(np_convert_label(label[1:, 1]), dtype=torch.long)))
 
     # loop through all the images and resize them
     # to 100x100 pixels
@@ -254,7 +254,7 @@ for i in range (min_range, max_range):
 
 print('y_piece_generated shape:', np.array(y_piece_generated).shape)
 
-np.savez_compressed(save_folder_path+'y_piece_generated', y_piece_generated)
+torch.save(y_piece_generated, save_folder_path+'y_piece_generated.pt')
 
 # # # split the dataset into train, validation, and test sets
 # # X_generated_train_val, X_generated_test, y_generated_train_val, y_generated_test = train_test_split(X_generated, y_generated, test_size=0.1, random_state=0)
