@@ -3,6 +3,7 @@ anyio==3.6.2
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
 arrow==1.2.3
+art==5.9
 asgiref==3.6.0
 asttokens==2.0.5
 astunparse==1.6.3
@@ -79,7 +80,7 @@ nest-asyncio==1.5.6
 networkx==3.0
 notebook==6.5.2
 notebook_shim==0.2.2
-numpy==1.22.3
+numpy==1.24.2
 oauthlib==3.2.0
 opencv-python==4.7.0.72
 opt-einsum==3.3.0
@@ -98,6 +99,7 @@ psutil==5.9.4
 pure-eval==0.2.2
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
+pycm==3.8
 pycodestyle==2.10.0
 pycparser==2.21
 Pygments==2.11.2
@@ -141,6 +143,7 @@ tinycss2==1.2.1
 tomli==2.0.1
 torch==2.0.0+cu118
 torchaudio==2.0.1+cu118
+torchmetrics==0.11.4
 torchsummary==1.5.1
 torchvision==0.15.1+cu118
 tornado==6.2
