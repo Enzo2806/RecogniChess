@@ -255,29 +255,3 @@ for i in range (min_range, max_range):
 # print('y_piece_generated shape:', np.array(y_piece_generated).shape)
 
 # torch.save(y_piece_generated, save_folder_path+'y_piece_generated.pt')
-
-# # # split the dataset into train, validation, and test sets
-# # X_generated_train_val, X_generated_test, y_generated_train_val, y_generated_test = train_test_split(X_generated, y_generated, test_size=0.1, random_state=0)
-# # X_generated_train, X_generated_val, y_generated_train, y_generated_val = train_test_split(X_generated_train_val, y_generated_train_val, test_size=0.1/(0.8+0.1), random_state=0)
-
-# batch_size = 4
-
-# # Create Tensor datasets
-# train_data = TensorDataset(X_generated_train, y_generated_train)
-# val_data = TensorDataset(X_generated_val, y_generated_val)
-# test_data = TensorDataset(X_generated_test, y_generated_test)
-
-# # Create data loaders
-# train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-# val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-# test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
-
-
-# print(f"Number of training examples: {len(train_loader)*batch_size}")
-# print(f"Number of testing examples: {len(val_loader)*batch_size}")
-# print(f"Number of validation examples: {len(test_loader)*batch_size}")
-
-# # save the dataloader to disk
-# torch.save(train_loader, folder_path+'train_generated_batch='+str(batch_size)+'.pt')
-# torch.save(val_loader, folder_path+'val_generated_batch='+str(batch_size)+'.pt')
-# torch.save(test_loader, folder_path+'test_generated_batch='+str(batch_size)+'.pt')
