@@ -474,7 +474,7 @@ def warpPoints(pts, H):
 
     return pts_warped
 
-def warp_image(filename, plot=False):
+def warp_image(filename, plot=False, result_save_path=None):
 
     # Load the image and find the chessboard on it
     img, img_orig = loadImage(filename)
@@ -523,6 +523,10 @@ def warp_image(filename, plot=False):
             ax = plt.gca()
             ax.set_axis_off()
 
+            # If the result save path is not none, save the image
+            if result_save_path is not None:
+                plt.savefig(result_save_path + "-unwarped.png", bbox_inches='tight', pad_inches=0)
+
             # Plot the final image with the warped corners
             plt.figure(frameon=False, figsize=(30, 30))
             imshow(im_out, cmap='Greys_r', aspect='auto')
@@ -530,6 +534,11 @@ def warp_image(filename, plot=False):
                      inner_corners_warped[:, 1], 'bo', markersize=30)  # Plot the detected corners of the image for display
             ax = plt.gca()
             ax.set_axis_off()
+
+            # If the result save path is not none, save the image
+            if result_save_path is not None:
+                plt.savefig(result_save_path + "-warped.png", bbox_inches='tight', pad_inches=0)
+
             
         return im_out
 
@@ -569,3 +578,81 @@ def crop_individual_squares(warped_image):
 
     # Return the array of squares
     return squares
+
+def fen_to_vector(fen):
+
+    # The rows of the board
+    board_rows_top_to_bottom = []
+
+    # Split the fen string into rows
+    # The rows are separated by either - or _
+    for row in fen.replace('_', '-').split('-'):
+        
+        # The current row being processed
+        cur_row = []
+
+        # Go over the row elements
+        for c in list(row):
+            # Empty squares
+            if c in '12345678':
+                cur_row.extend([0] * int(c))
+            # White pawn
+            elif c == 'P':
+                cur_row.append(1)
+            # White knight
+            elif c == 'N':
+                cur_row.append(2)
+            # White bishop
+            elif c == 'B':
+                cur_row.append(3)
+            # White rook
+            elif c == 'R':
+                cur_row.append(4)
+            # White queen
+            elif c == 'Q':
+                cur_row.append(5)
+            # White king
+            elif c == 'K':
+                cur_row.append(6)
+            # Black pawn
+            elif c == 'p':
+                cur_row.append(7)
+            # Black knight
+            elif c == 'n':
+                cur_row.append(8)
+            # Black bishop
+            elif c == 'b':
+                cur_row.append(9)
+            # Black rook
+            elif c == 'r':
+                cur_row.append(10)
+            # Black queen
+            elif c == 'q':
+                cur_row.append(11)
+            # Black king
+            elif c == 'k':
+                cur_row.append(12)
+
+        # Sanity check: The row has 8 elements
+        if(len(cur_row) != 8):
+            print(fen)
+            print(cur_row)
+        assert len(cur_row) == 8
+
+        # Append the row
+        board_rows_top_to_bottom.append(cur_row)
+    
+    # Convert the board to a numpy array
+    board = np.array(board_rows_top_to_bottom) 
+
+    # Transpose the board so that each row of the matrix represents a logical column
+    board = board.T
+
+    # Invert the order of each new row so that it represents the squares from bottom to top as required
+    board = np.fliplr(board)
+
+    # Flatten the rows into a single vector, from top to bottom
+    vector = board.flatten()
+
+    # Return the flattened board
+    return vector

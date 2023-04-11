@@ -3,3 +3,4 @@ venv
 .idea
 CORAL.py
 __pycache__/
+.vscode
