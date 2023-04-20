@@ -8,6 +8,9 @@ Chess, a centuries-old strategic board game, remains popular among enthusiasts a
 
 <img src="Resources/readme-images/pipeline-overview.png">
 
+## Using the generated images
+This repository falls under an MIT license, meaning that all the code and images are free for non-commercial use. Citing the repository and paper in any subsequent work is greatly appreciated.
+
 ## Running the code
 Please use "pip install -r requirements.txt" to install the dependencies required for the project. Please note that the pre-processing pipeline code requires an older version of numpy, as explained using a comment in the header of the preprocessing.ipynb file.
 
