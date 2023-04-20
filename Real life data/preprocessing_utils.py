@@ -2,6 +2,10 @@
 # This utility file is a modified version of the following code:
 # https://github.com/Elucidation/ChessboardDetect/blob/master/FindChessboards.py
 
+# IMPORTANT: PLEASE NOTE THAT THIS CODE IS ONLY COMPATIBLE WITH NUMPY 1.22.3
+# WHILE THE REST OF THE REPO ADHERES TO THE VERSION IN THE requirements.txt FILE
+# PLEASE REVERT TO THAT VERSION FOR ANYTHING PRE_PROCESSING RELATED
+
 #
 # Imports
 #
