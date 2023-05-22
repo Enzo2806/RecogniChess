@@ -3,7 +3,6 @@ from PIL import Image, ImageFilter
 import os
 import torch
 
-
 # Get the dimensions of the individual squares
 # These dimensions are used to crop the image into individual squares
 # The dimensions are calculated by dividing the image into 8x8 squares using the Grid tool on Photoshop
@@ -98,7 +97,7 @@ H7_crop = (vertical_eighth_border, horizontal_second_border, vertical_right_bord
 H8_crop = (vertical_eighth_border, horizontal_top_broder, vertical_right_border, horizontal_second_border)
 
 min_range = 0
-max_range = 4501
+max_range = 1000
 imported_range = max_range - min_range
 
 # Initialize empty tensors for y array 
@@ -108,7 +107,7 @@ y_piece_generated = torch.Tensor(())
 label_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Labels")
 image_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Images")
 
-save_folder_path = os.path.join(os.getcwd(), "Data Generation/Pre Processed Data Generated/Square Images/")
+save_folder_path = os.path.join(os.getcwd(), "Data Generation/Full Generated Dataset/")
 
 def convert_label(label_square):
     # Convert the label of the square to a fixed number following this mapping:
@@ -253,4 +252,4 @@ for i in range (min_range, max_range):
         img.save(save_folder_path+'EX_%06d' % (i*64+j) + '.png')
 
 # Save the label in the new folder
-torch.save(y_piece_generated, save_folder_path+'y_generated.pt')
+torch.save(y_piece_generated, save_folder_path+'y_generated2.pt')
