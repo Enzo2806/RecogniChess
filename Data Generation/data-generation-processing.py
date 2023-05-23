@@ -96,7 +96,7 @@ H6_crop = (vertical_eighth_border, horizontal_third_border, vertical_right_borde
 H7_crop = (vertical_eighth_border, horizontal_second_border, vertical_right_border, horizontal_third_border)
 H8_crop = (vertical_eighth_border, horizontal_top_broder, vertical_right_border, horizontal_second_border)
 
-min_range = 4000
+min_range = 0
 max_range = 4501
 imported_range = max_range - min_range
 
@@ -252,4 +252,4 @@ for i in range (min_range, max_range):
         img.save(save_folder_path+'EX_%06d' % (i*64+j) + '.png')
 
 # Save the label in the new folder
-torch.save(y_piece_generated, save_folder_path+'y_generated5.pt')
+torch.save(y_piece_generated, save_folder_path+'y_generated.pt')
