@@ -107,7 +107,7 @@ y_piece_generated = torch.Tensor(())
 label_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Labels")
 image_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Images")
 
-save_folder_path = os.path.join(os.getcwd(), "Data Generation/Full Generated Dataset/")
+save_folder_path = os.path.join(os.getcwd(), "Datasets/Generated Data/")
 
 def convert_label(label_square):
     # Convert the label of the square to a fixed number following this mapping:
