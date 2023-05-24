@@ -96,6 +96,8 @@ H6_crop = (vertical_eighth_border, horizontal_third_border, vertical_right_borde
 H7_crop = (vertical_eighth_border, horizontal_second_border, vertical_right_border, horizontal_third_border)
 H8_crop = (vertical_eighth_border, horizontal_top_broder, vertical_right_border, horizontal_second_border)
 
+# Since we can't push all the data onto GitHub at once, we will generated them by batches and upload each one by one
+# We thus specify the range of the data we want to preprocess and save the corresponding label file at the end
 min_range = 4000
 max_range = 4501
 imported_range = max_range - min_range
