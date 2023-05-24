@@ -4,35 +4,80 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
-
-# Transform to apply to the minibatches for data augmentation
-# Define the transformation to apply
-# Transformations: Random horizontal and vertical flips, halving and doubling the brightness
-# This should improve the prediction accuracy
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.RandomHorizontalFlip(p=0.5),
-    transforms.RandomVerticalFlip(p=0.5),
-    transforms.RandomApply([transforms.ColorJitter(brightness=[0.75, 1.25])], p=0.5)
-])
+import matplotlib.pyplot as plt
 
 class CustomDataset(Dataset):
     '''
     Custom dataset class for the lazy loading of the data
 
+    - dataset: Generated or Real Life
+
+    - set: train, validation or test
+
+    - full_dataset: True if the full dataset is used, False if the balanced dataset is used
+
+    - transform: True if the data augmentation is applied, False otherwise
     '''
-    def __init__(self, data_file, root_dir):
-        self.data_file = data_file
-        self.root_dir = root_dir
+    def __init__(self, dataset, set, full_dataset = False, apply_transform = True):
+
+        # Check data validity
+        if dataset not in ["Generated", "Real Life"]:
+            raise ValueError("Dataset not valid")
+        if set not in ["train", "validation", "test"]:
+            raise ValueError("Set not valid")
+
+        self.dataset = dataset
+        self.set = set
+        self.full_dataset = full_dataset
+        self.apply_transform = apply_transform
+
+        if self.apply_transform:
+            # Transform to apply to the minibatches for data augmentation
+            # Define the transformation to apply
+            # Transformations: Random horizontal and vertical flips, halving and doubling the brightness
+            # This should improve the prediction accuracy
+            self.transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomVerticalFlip(p=0.5),
+                transforms.RandomApply([transforms.ColorJitter(brightness=[0.75, 1.25])], p=0.5)
+            ])
+        else:
+            self.transform = transforms.Compose([
+                transforms.ToTensor()])
+
+        # Define the data_path depending on the dataset, the set and the full_dataset flag
+        if self.dataset == "Generated":
+            self.root_path = "./Datasets/Generated Data/"
+            if self.set == "train":
+                self.data_path = "./Datasets/Generated Data/train_full_generated_data.json" if self.full_dataset else \
+                                 "./Datasets/Generated Data/train_balanced_generated_data.json"
+            elif self.set == "validation":
+                self.data_path = "./Datasets/Generated Data/validation_full_generated_data.json" if self.full_dataset else \
+                                "./Datasets/Generated Data/validation_balanced_generated_data.json"
+            else:
+                self.data_path = "./Datasets/Generated Data/test_full_generated_data.json" if self.full_dataset else \
+                                "./Datasets/Generated Data/test_balanced_generated_data.json"
+        else:
+            self.root_path = "./Datasets/Real Life Data/"
+            if self.set == "train":
+                self.data_path = "./Datasets/Real Life Data/train_full_real_life_data.json" if self.full_dataset else \
+                                "./Datasets/Real Life Data/train_balanced_real_life_data.json"
+            elif self.set == "validation":
+                self.data_path = "./Datasets/Real Life Data/validation_full_real_life_data.json" if self.full_dataset else \
+                                "./Datasets/Real Life Data/validation_balanced_real_life_data.json"
+            else:
+                self.data_path = "./Datasets/Real Life Data/test_full_real_life_data.json" if self.full_dataset else \
+                                "./Datasets/Real Life Data/test_balanced_real_life_data.json"
         
         # Load the JSON file
-        with open(self.data_file, "r") as file:
+        with open(self.data_path, "r") as file:
             self.data = json.load(file)
         
-        self.images = self.data["train"] if self.data_file == "train_full_generated_data.json" else \
-                      self.data["validation"] if self.root_dir == "validation_full_generated_data.json" else \
-                      self.data["test"]
+        # Get the images name form the JSON file 
+        self.images = self.data[self.set]
         
+        # Get the labels from the JSON file
         self.labels = self.data["label"]
         
     def __len__(self):
@@ -40,51 +85,39 @@ class CustomDataset(Dataset):
     
     def __getitem__(self, idx):
         img_name = self.images[idx]
-        img_path = os.path.join(self.root_dir, img_name)
+        img_path = os.path.join(self.root_path, img_name)
         image = Image.open(img_path)
-
-        transform = transforms.ToTensor()
-        image = transform(image)
+        image = self.transform(image)
         
         label = self.labels[idx]
         
         return image, label
     
-train_dataset = CustomLazyDataset("train_full_generated_data.json", "../Datasets/Generated Data/")
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
+# Uncomment to test the custom dataset
+# def try_dataset(dataset, set, full_dataset = False, apply_transform = True):
+#     dataset = CustomDataset(dataset, set)
+#     loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
 
-class CustomDataset(Dataset):
-    
-    def __init__(self, root_dir, label_dir):
-        self.root_dir = root_dir
-        self.label_dir = label_dir
-        self.images = os.listdir(root_dir)
-        self.labels = torch.load(label_dir).long()
+#     # Get the first batch of data
+#     images, labels = next(iter(loader))
 
-        # Remove the labels that do not belong to this split of the dataset (Labels is all labels)
-        self.labels = self.labels[torch.tensor([int(img_name[3:9]) for img_name in self.images])]
+#     # Plot the images with their labels
+#     fig, axs = plt.subplots(4, 8, figsize=(12, 6))
+#     fig.tight_layout()
 
+#     for i in range(4):
+#         for j in range(8):
+#             index = i * 8 + j
+#             image = images[index]
+#             label = labels[index]
 
+#             # Reverse any preprocessing or transformation applied to the image
+#             # (if applicable) before plotting
 
-    def __len__(self):
-        return len(self.images)
+#             axs[i][j].imshow(image.permute(1, 2, 0))
+#             axs[i][j].set_title(f"Label: {label}")
+#             axs[i][j].axis("off")
 
-    def __getitem__(self, idx):
-        img_name = self.images[idx]
-        img_path = os.path.join(self.root_dir, img_name)
-        image = Image.open(img_path)
-        image = transform(image)
-        label = self.labels[idx] # Since we removed the labels that do not belong to this split, we can use idx directly
-        return image, label
+#     plt.show()
 
-# Extract the generated data
-generated_data_root = "../../Data Generation/Pre Processed Data Generated"
-train_gen_dataset = CustomDataset(generated_data_root + "/Square Images/Training", generated_data_root + "/Square Images/y_generated.pt")
-val_gen_dataset = CustomDataset(generated_data_root + "/Square Images/Validation", generated_data_root + "/Square Images/y_generated.pt")
-test_gen_dataset = CustomDataset(generated_data_root + "/Square Images/Testing", generated_data_root + "/Square Images/y_generated.pt")
-
-# Extract the real data
-real_data_root = "../../Real life data/Pre processed Real Life"
-train_real_dataset = CustomDataset(real_data_root + "/Square Images/Training", real_data_root + "/Square Images/y_real_life.pt")
-val_real_dataset = CustomDataset(real_data_root + "/Square Images/Validation", real_data_root + "/Square Images/y_real_life.pt")
-test_real_dataset = CustomDataset(real_data_root + "/Square Images/Testing", real_data_root + "/Square Images/y_real_life.pt")
+# try_dataset("Generated", "train", full_dataset = True, apply_transform = False)
