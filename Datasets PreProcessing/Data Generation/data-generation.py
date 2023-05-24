@@ -398,10 +398,10 @@ for i in range (dataset_size):
     # Render the image and store it with labels                          
     
     # Save the label file as .csv
-    name = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
+    name = "/Users/bejay/Documents/GitHub/RecogniChess/Datasets PreProcessing/Data Generation/Data Generated/Labels/EX_%04d" % i + ".npy"
     np.save(name, label)
     
     # Set the render settings
     bpy.context.scene.render.image_settings.file_format = 'PNG'
-    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Data Generation/Data Generated/Images/EX_%04d" % i
+    bpy.context.scene.render.filepath = "/Users/bejay/Documents/GitHub/RecogniChess/Datasets PreProcessing/Data Generation/Data Generated/Images/EX_%04d" % i
     bpy.ops.render.render(write_still = 1)

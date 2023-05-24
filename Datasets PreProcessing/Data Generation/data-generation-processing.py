@@ -106,8 +106,8 @@ imported_range = max_range - min_range
 y_piece_generated = torch.Tensor(())
 
 # Import the data generated in Data Generation/Data Generated/
-label_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Labels")
-image_folder = os.path.join(os.getcwd(), "Data Generation/Data Generated/Images")
+label_folder = os.path.join(os.getcwd(), "Datasets PreProcessing/Data Generation/Data Generated/Labels")
+image_folder = os.path.join(os.getcwd(), "Datasets PreProcessing/Data Generation/Data Generated/Images")
 
 save_folder_path = os.path.join(os.getcwd(), "Datasets/Generated Data/")
 
