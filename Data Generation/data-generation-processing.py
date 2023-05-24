@@ -96,8 +96,8 @@ H6_crop = (vertical_eighth_border, horizontal_third_border, vertical_right_borde
 H7_crop = (vertical_eighth_border, horizontal_second_border, vertical_right_border, horizontal_third_border)
 H8_crop = (vertical_eighth_border, horizontal_top_broder, vertical_right_border, horizontal_second_border)
 
-min_range = 1000
-max_range = 2000
+min_range = 2000
+max_range = 3000
 imported_range = max_range - min_range
 
 # Initialize empty tensors for y array 
