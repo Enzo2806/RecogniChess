@@ -45,30 +45,32 @@ class CustomDataset(Dataset):
         else:
             self.transform = transforms.Compose([
                 transforms.ToTensor()])
-
+            
         # Define the data_path depending on the dataset, the set and the full_dataset flag
+        # Note the data path is relative to the file that is calling the dataset class
+        # The calls are made in MODEL/MODEL_NAME/Model.py
         if self.dataset == "Generated":
-            self.root_path = "./Datasets/Generated Data/"
+            self.root_path = "../../Datasets/Generated Data/"
             if self.set == "train":
-                self.data_path = "./Datasets/Generated Data/train_full_generated_data.json" if self.full_dataset else \
-                                 "./Datasets/Generated Data/train_balanced_generated_data.json"
+                self.data_path = "../../Datasets/Generated Data/train_full_generated_data.json" if self.full_dataset else \
+                                 "../../Datasets/Generated Data/train_balanced_generated_data.json"
             elif self.set == "validation":
-                self.data_path = "./Datasets/Generated Data/validation_full_generated_data.json" if self.full_dataset else \
-                                "./Datasets/Generated Data/validation_balanced_generated_data.json"
+                self.data_path = "../../Datasets/Generated Data/validation_full_generated_data.json" if self.full_dataset else \
+                                "../../Datasets/Generated Data/validation_balanced_generated_data.json"
             else:
-                self.data_path = "./Datasets/Generated Data/test_full_generated_data.json" if self.full_dataset else \
-                                "./Datasets/Generated Data/test_balanced_generated_data.json"
+                self.data_path = "../../Datasets/Generated Data/test_full_generated_data.json" if self.full_dataset else \
+                                "../../Datasets/Generated Data/test_balanced_generated_data.json"
         else:
-            self.root_path = "./Datasets/Real Life Data/"
+            self.root_path = "../../Datasets/Real Life Data/"
             if self.set == "train":
-                self.data_path = "./Datasets/Real Life Data/train_full_real_life_data.json" if self.full_dataset else \
-                                "./Datasets/Real Life Data/train_balanced_real_life_data.json"
+                self.data_path = "../../Datasets/Real Life Data/train_full_real_life_data.json" if self.full_dataset else \
+                                "../../Datasets/Real Life Data/train_balanced_real_life_data.json"
             elif self.set == "validation":
-                self.data_path = "./Datasets/Real Life Data/validation_full_real_life_data.json" if self.full_dataset else \
-                                "./Datasets/Real Life Data/validation_balanced_real_life_data.json"
+                self.data_path = "../../Datasets/Real Life Data/validation_full_real_life_data.json" if self.full_dataset else \
+                                "../../Datasets/Real Life Data/validation_balanced_real_life_data.json"
             else:
-                self.data_path = "./Datasets/Real Life Data/test_full_real_life_data.json" if self.full_dataset else \
-                                "./Datasets/Real Life Data/test_balanced_real_life_data.json"
+                self.data_path = "../../Datasets/Real Life Data/test_full_real_life_data.json" if self.full_dataset else \
+                                "../../Datasets/Real Life Data/test_balanced_real_life_data.json"
         
         # Load the JSON file
         with open(self.data_path, "r") as file:
@@ -79,16 +81,19 @@ class CustomDataset(Dataset):
         
         # Get the labels from the JSON file
         self.labels = self.data["label"]
+
+        self.labels = torch.tensor(self.labels, dtype=torch.int64)
         
     def __len__(self):
         return len(self.images)
     
     def __getitem__(self, idx):
-        img_name = self.images[idx]
-        img_path = os.path.join(self.root_path, img_name)
+        img_path = os.path.join(self.root_path, self.images[idx])
+
         image = Image.open(img_path)
         image = self.transform(image)
         
+        # Convert the label to int instead of float
         label = self.labels[idx]
         
         return image, label
