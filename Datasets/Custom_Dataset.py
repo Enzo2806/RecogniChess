@@ -38,6 +38,7 @@ class CustomDataset(Dataset):
             # This should improve the prediction accuracy
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
+                transforms.Resize((100, 100)),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomApply([transforms.ColorJitter(brightness=[0.75, 1.25])], p=0.5)
@@ -82,7 +83,7 @@ class CustomDataset(Dataset):
         # Get the labels from the JSON file
         self.labels = self.data["label"]
 
-        self.labels = torch.tensor(self.labels, dtype=torch.int64)
+        self.labels = torch.tensor(self.labels, dtype=torch.long)
         
     def __len__(self):
         return len(self.images)
