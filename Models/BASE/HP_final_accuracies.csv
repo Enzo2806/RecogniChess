@@ -1,2 +1,3 @@
-Gamma,Drouput Rate,Batch Size,Final validation accuracy
-2.0,200.0,0.2,0.5612499713897705
+Gamma,Dropout Rate,Batch Size,Final validation accuracy
+2.0,100.0,0.2,0.5398461222648621
+5.0,100.0,0.2,0.4883846342563629
