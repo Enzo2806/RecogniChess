@@ -3,8 +3,10 @@ import os
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
 import matplotlib.pyplot as plt
+import numpy as np
 
 class CustomDataset(Dataset):
     '''
@@ -98,32 +100,30 @@ class CustomDataset(Dataset):
         label = self.labels[idx]
         
         return image, label
-    
-# Uncomment to test the custom dataset
-# def try_dataset(dataset, set, full_dataset = False, apply_transform = True):
-#     dataset = CustomDataset(dataset, set)
-#     loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
 
-#     # Get the first batch of data
-#     images, labels = next(iter(loader))
+# We can now proceed to defining a function that creates a data loader for both datasets, oversampling the minority classes and applying horizontal flip and blur transformations:
+def get_gen_loader(dataset, batch_size):
 
-#     # Plot the images with their labels
-#     fig, axs = plt.subplots(4, 8, figsize=(12, 6))
-#     fig.tight_layout()
+    # Because we are using balanced accuracy scores, we can use the class analytics gathered during pre-processing to define the following class distribution array:
+    class_proportions_gen = np.array([0.3198, 0.1602, 0.0405, 0.0400, 0.0406, 0.0201, 0.0404, 0.1596, 0.0392, 0.0397, 0.0400, 0.0196, 0.0404])
+    class_proportions_real = np.array([0.3228, 0.1738, 0.0347, 0.0415, 0.0454, 0.0206, 0.0354, 0.1490, 0.0284, 0.0463, 0.0432, 0.0234, 0.0354])
 
-#     for i in range(4):
-#         for j in range(8):
-#             index = i * 8 + j
-#             image = images[index]
-#             label = labels[index]
+    # Define the sampler using class distributions to oversample the minority classes
+    class_weights = 1. / torch.tensor(class_proportions_gen, dtype=torch.float) # The weights of the classes
+    sample_weights = class_weights[dataset.labels] # Assign each label its corresponding weight
+    sampler = torch.utils.data.WeightedRandomSampler(sample_weights, len(sample_weights))
 
-#             # Reverse any preprocessing or transformation applied to the image
-#             # (if applicable) before plotting
+    return DataLoader(dataset, batch_size=batch_size, sampler=sampler)
 
-#             axs[i][j].imshow(image.permute(1, 2, 0))
-#             axs[i][j].set_title(f"Label: {label}")
-#             axs[i][j].axis("off")
+def get_real_loader(dataset, batch_size):
 
-#     plt.show()
+    # Because we are using balanced accuracy scores, we can use the class analytics gathered during pre-processing to define the following class distribution array:
+    class_proportions_gen = np.array([0.3198, 0.1602, 0.0405, 0.0400, 0.0406, 0.0201, 0.0404, 0.1596, 0.0392, 0.0397, 0.0400, 0.0196, 0.0404])
+    class_proportions_real = np.array([0.3228, 0.1738, 0.0347, 0.0415, 0.0454, 0.0206, 0.0354, 0.1490, 0.0284, 0.0463, 0.0432, 0.0234, 0.0354])
 
-# try_dataset("Generated", "train", full_dataset = True, apply_transform = False)
+    # Define the sampler using class distributions to oversample the minority classes
+    class_weights = 1. / torch.tensor(class_proportions_real, dtype=torch.float) # The weights of the classes
+    sample_weights = class_weights[dataset.labels] # Assign each label its corresponding weight
+    sampler = torch.utils.data.WeightedRandomSampler(sample_weights, len(sample_weights))
+
+    return DataLoader(dataset, batch_size=batch_size, sampler=sampler)
