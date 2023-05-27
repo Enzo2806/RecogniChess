@@ -1,1 +1,62 @@
-{"White rook": 641, "White pawn": 2452, "Empty": 22445, "Black pawn": 2103, "Black rook": 609, "White knight": 489, "White bishop": 586, "Black knight": 401, "Black bishop": 653, "White queen": 291, "Black queen": 330, "Black king": 500, "White king": 500}
+{
+    "full": {
+        "Empty": 22445,
+        "White pawn": 2452,
+        "White knight": 489,
+        "White bishop": 586,
+        "White rook": 641,
+        "White queen": 291,
+        "White king": 500,
+        "Black pawn": 2103,
+        "Black knight": 401,
+        "Black bishop": 653,
+        "Black rook": 609,
+        "Black queen": 330,
+        "Black king": 500
+    },
+    "train": {
+        "Empty": 17944,
+        "White pawn": 1987,
+        "White knight": 384,
+        "White bishop": 447,
+        "White rook": 519,
+        "White queen": 244,
+        "White king": 395,
+        "Black pawn": 1677,
+        "Black knight": 323,
+        "Black bishop": 531,
+        "Black rook": 482,
+        "Black queen": 270,
+        "Black king": 397
+    },
+    "validation": {
+        "Empty": 2229,
+        "White pawn": 238,
+        "White knight": 50,
+        "White bishop": 70,
+        "White rook": 67,
+        "White queen": 30,
+        "White king": 60,
+        "Black pawn": 214,
+        "Black knight": 39,
+        "Black bishop": 53,
+        "Black rook": 59,
+        "Black queen": 33,
+        "Black king": 58
+    },
+    "test": {
+        "Empty": 2272,
+        "White pawn": 227,
+        "White knight": 55,
+        "White bishop": 69,
+        "White rook": 55,
+        "White queen": 17,
+        "White king": 45,
+        "Black pawn": 212,
+        "Black knight": 39,
+        "Black bishop": 69,
+        "Black rook": 68,
+        "Black queen": 27,
+        "Black king": 45
+    }
+}
