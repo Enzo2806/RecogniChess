@@ -47,7 +47,7 @@ class CustomDataset(Dataset):
                 transforms.Resize((100, 100), antialias=True)
             ])
             
-        # Define the data_path depending on the type of the dataset, the set and the full_dataset flag
+        # Define the data_path depending on the type of the dataset and the set
         # Note the data path is relative to the file that is calling the dataset class
         # The calls are made in MODEL/MODEL_NAME/Model.py
         if self.type == "Generated":
