@@ -16,8 +16,10 @@ class CustomDataset(Dataset):
     - set: train, validation or test
 
     - balance: If true, applies oversampling AND data augmentation to the minority classes
+
+    - filter_array: If not empty, only the images with the indexes in the array will be retained
     '''
-    def __init__(self, type, set, balance=True):
+    def __init__(self, type, set, balance=True, filter_array = []):
 
         # Check data validity
         if type not in ["Generated", "Real Life"]:
@@ -72,12 +74,16 @@ class CustomDataset(Dataset):
             self.data = json.load(file)
         
         # Get the images name form the JSON file 
-        self.images = self.data[self.set]
+        self.images = np.array(self.data[self.set])
         
         # Get the labels from the JSON file
         self.labels = self.data["label"]
-
         self.labels = torch.tensor(self.labels, dtype=torch.long)
+
+        # If the retain array is not empty, only retain the images with the indexes in the array
+        if len(filter_array) > 0:
+            self.images = self.images[filter_array]
+            self.labels = self.labels[filter_array]
         
     def __len__(self):
         return len(self.images)
