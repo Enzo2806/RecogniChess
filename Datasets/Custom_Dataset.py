@@ -100,7 +100,7 @@ class CustomDataset(Dataset):
         return image, label
 
 # We can now proceed to defining a function that creates a data loader for both datasets, oversampling the minority classes and applying horizontal flip and blur transformations:
-def get_loader(dataset, batch_size):
+def get_loader(dataset, batch_size, balance = True):
 
     # # Because we are using balanced accuracy scores, we can use the class analytics gathered during pre-processing to define the following class distribution array:
     # class_proportions_gen = np.array([0.3198, 0.1602, 0.0405, 0.0400, 0.0406, 0.0201, 0.0404, 0.1596, 0.0392, 0.0397, 0.0400, 0.0196, 0.0404])
@@ -122,8 +122,11 @@ def get_loader(dataset, batch_size):
         class_proportions = class_proportions / np.sum(class_proportions)
 
     # Define the sampler using class distributions to oversample the minority classes
-    class_weights = 1. / torch.tensor(class_proportions, dtype=torch.float) # The weights of the classes
-    sample_weights = class_weights[dataset.labels] # Assign each label its corresponding weight
-    sampler = torch.utils.data.WeightedRandomSampler(sample_weights, len(dataset), replacement=True)
-
+    if balance:
+        class_weights = 1. / torch.tensor(class_proportions, dtype=torch.float) # The weights of the classes
+        sample_weights = class_weights[dataset.labels] # Assign each label its corresponding weight
+        sampler = torch.utils.data.WeightedRandomSampler(sample_weights, len(dataset), replacement=True)
+    else:
+        sampler = None
+        
     return DataLoader(dataset, batch_size=batch_size, sampler=sampler)
