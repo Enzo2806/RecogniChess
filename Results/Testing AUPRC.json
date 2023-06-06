@@ -1,0 +1,26 @@
+{
+    "Real Life Oversample": {
+        "DANN": 0.8423062312483975,
+        "CORAL": 0.8590547167167333,
+        "BASE Source": 0.5947969131974513,
+        "BASE Target": 0.9365617286249124
+    },
+    "Real Life No Oversample": {
+        "DANN": 0.7927378713898416,
+        "CORAL": 0.8259044779219639,
+        "BASE Source": 0.5569806493602985,
+        "BASE Target": 0.8897242773249912
+    },
+    "Generated Oversample": {
+        "DANN": 0.9969042342604078,
+        "CORAL": 0.9994250708511978,
+        "BASE Source": 0.9921713428146537,
+        "BASE Target": 0.4292327844991725
+    },
+    "Generated No Oversample": {
+        "DANN": 0.997601064988843,
+        "CORAL": 0.9995140355095516,
+        "BASE Source": 0.9919260735709534,
+        "BASE Target": 0.4106024324559403
+    }
+}
